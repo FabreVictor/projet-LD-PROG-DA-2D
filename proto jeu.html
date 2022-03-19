@@ -88,6 +88,9 @@
         var cadenceShoot
         cadenceShoot = 100
 
+        var bomb = bombs.create(x, 16, 'bomb');
+
+
 
         function checkDash(player, direction, velocity) {
             if ((Phaser.Input.Keyboard.JustDown(spacebar))) {
@@ -171,6 +174,7 @@
             this.physics.add.collider(stars, platforms);
             //et collisionne avec les plateformes
             this.physics.add.overlap(player, stars, collectStar, null, this);
+            this.physics.add.overlap(bullets, bombs, shootBomb, null, this);
             //le contact perso/étoile ne génère pas de collision (overlap)
             //mais en revanche cela déclenche une fonction collectStar
             bombs = this.physics.add.group();
@@ -282,6 +286,10 @@
             gameOver = true;
         }
 
+        function shootBomb(bullets, bomb) {
+
+        }
+
         function collectStar(player, star) {
             star.disableBody(true, true); // l’étoile disparaît
             ammo += 10; //augmente le score de 10
@@ -299,6 +307,10 @@
                 bomb.setCollideWorldBounds(true);
                 bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
                 bomb.allowGravity = false; //elle n’est pas soumise à la gravité
+            }
+
+            function shootBomb(bullets, bomb) {
+
             }
 
         }
