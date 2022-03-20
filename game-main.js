@@ -23,15 +23,14 @@ var config = {
 new Phaser.Game(config);
 
 function preload() {
-    this.load.image('sky', 'assets/sky.png');
+    this.load.image('sky', 'assets/sky.png')
     this.load.image('ground', 'assets/platform.png');
     this.load.image('star', 'assets/star.png');
     this.load.image('bomb', 'assets/bomb.png');
     this.load.spritesheet('perso', 'assets/perso.png', {
         frameWidth: 32,
         frameHeight: 48
-    });
-
+    })
 }
 
 /*function create(){
@@ -42,6 +41,7 @@ function preload() {
 }*/
 
 var platforms;
+var light
 var player;
 var cursors;
 var stars;
@@ -100,7 +100,17 @@ function checkJump(player) {
 }
 
 function create() {
-    this.add.image(400, 300, 'sky');
+
+    let sky = this.add.image(400, 300, 'sky')
+
+    const spectrum = Phaser.Display.Color.ColorSpectrum(128)
+    let radius = 128
+    let intensity = 1
+    let colorIndex = 12
+    light = this.add.pointlight(400, 300, 0, radius, intensity)
+    let color = spectrum[colorIndex]
+    light.color.setTo(color.r, color.g, color.b)
+
     platforms = this.physics.add.staticGroup();
     platforms.create(400, 568, 'ground').setScale(2).refreshBody();
     platforms.create(600, 400, 'ground');
@@ -150,6 +160,7 @@ function create() {
             y: 0,
             stepX: 70
         }
+
     });
     stars.children.iterate(function(child) {
         child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
@@ -162,9 +173,9 @@ function create() {
     //mais en revanche cela déclenche une fonction collectStar
     bombs = this.physics.add.group();
     this.physics.add.collider(bombs, platforms);
-    //this.physics.add.collider(bullets, platforms);
-    //this.physics.add.collider(bullets, bombs)
     this.physics.add.collider(player, bombs, hitBomb, null, this);
+
+
 
     this.input.keyboard.enabled = true
     spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
@@ -176,12 +187,8 @@ function create() {
     doubleJump = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
 
     var Bullet = new Phaser.Class({
-
         Extends: Phaser.GameObjects.Image,
-
-        initialize:
-
-            function Bullet(scene) {
+        initialize: function Bullet(scene) {
             Phaser.GameObjects.Image.call(this, scene, 0, 0, 'bomb');
 
             this.incX = 0;
@@ -190,7 +197,6 @@ function create() {
 
             this.speed = Phaser.Math.GetSpeed(600, 1);
         },
-
         fire: function(x, y) {
             this.setActive(true);
             this.setVisible(true);
@@ -207,7 +213,6 @@ function create() {
 
             this.lifespan = lifeShoot; //porté tir
         },
-
         update: function(time, delta) {
             this.lifespan -= delta;
 
@@ -219,15 +224,14 @@ function create() {
                 this.setVisible(false);
             }
         }
-
-    });
-
-    bullets = this.add.group({
+    })
+    bullets = this.physics.add.group({
         classType: Bullet,
         maxSize: maxShoot, //munition max afficher a l'ecran
         runChildUpdate: true
     })
-
+    this.physics.add.overlap(bullets, bombs, shootBomb, null, this)
+    this.physics.add.collider(bullets, platforms, shootWall, null, this);
     this.input.on('pointerdown', function(pointer) {
 
         isDown = true;
@@ -248,6 +252,7 @@ function create() {
         isDown = false;
 
     });
+
 }
 
 //function shootBomb(bullets, platforms) {
@@ -267,8 +272,14 @@ function hitBomb(player, bomb) {
     gameOver = true;
 }
 
-function shootBomb(bullets, bomb) {
+function shootWall(bullet) {
+    bullet.lifespan = 0
+}
+
+function shootBomb(bullet, bomb) {
     console.log("ici")
+    bullet.lifespan = 0
+    bomb.disableBody(true, true)
 }
 
 function collectStar(player, star) {
@@ -288,26 +299,29 @@ function collectStar(player, star) {
         bomb.setCollideWorldBounds(true)
         bomb.setVelocity(Phaser.Math.Between(-200, 200), 20)
         bomb.allowGravity = false //elle n’est pas soumise à la gravité
-        this.physics.add.overlap(bullets, bomb, shootBomb, null, this)
     }
 }
 
 function update(time, delta) {
 
-    if (Phaser.Input.Keyboard.DownDuration(keyZ)) {
+    // Update light
+    light.x = player.x
+    light.y = player.y
+
+    if (Phaser.Input.Keyboard.DownDuration(keyZ, 100000)) {
         player.setVelocityY(-playerSpeed);
         player.anims.play('right', true);
-    } else if (Phaser.Input.Keyboard.DownDuration(keyS)) {
+    } else if (Phaser.Input.Keyboard.DownDuration(keyS, 100000)) {
         player.setVelocityY(playerSpeed);
         player.anims.play('right', true);
     } else {
         player.setVelocityY(0);
         player.anims.play('turn');
     }
-    if (Phaser.Input.Keyboard.DownDuration(keyD)) {
+    if (Phaser.Input.Keyboard.DownDuration(keyD, 100000)) {
         player.setVelocityX(playerSpeed);
         player.anims.play('right', true);
-    } else if (Phaser.Input.Keyboard.DownDuration(keyQ)) {
+    } else if (Phaser.Input.Keyboard.DownDuration(keyQ, 100000)) {
         player.setVelocityX(-playerSpeed);
         player.anims.play('right', true);
     } else {
