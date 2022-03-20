@@ -72,7 +72,6 @@ lifeShoot = 1000
 var cadenceShoot
 cadenceShoot = 100
 
-var bomb = bombs.create(x, 16, 'bomb');
 
 
 
@@ -155,10 +154,10 @@ function create() {
     stars.children.iterate(function(child) {
         child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
     }); //chaque étoile va rebondir un peu différemment
+
     this.physics.add.collider(stars, platforms);
     //et collisionne avec les plateformes
     this.physics.add.overlap(player, stars, collectStar, null, this);
-    this.physics.add.overlap(bullets, bombs, shootBomb, null, this);
     //le contact perso/étoile ne génère pas de collision (overlap)
     //mais en revanche cela déclenche une fonction collectStar
     bombs = this.physics.add.group();
@@ -227,9 +226,7 @@ function create() {
         classType: Bullet,
         maxSize: maxShoot, //munition max afficher a l'ecran
         runChildUpdate: true
-    });
-
-
+    })
 
     this.input.on('pointerdown', function(pointer) {
 
@@ -271,7 +268,7 @@ function hitBomb(player, bomb) {
 }
 
 function shootBomb(bullets, bomb) {
-
+    console.log("ici")
 }
 
 function collectStar(player, star) {
@@ -286,17 +283,13 @@ function collectStar(player, star) {
             Phaser.Math.Between(400, 400);
         // si le perso est à gauche de l’écran, on met une bombe à droite
         // si non, on la met à gauche de l’écran
-        var bomb = bombs.create(x, 16, 'bomb');
-        bomb.setBounce(1);
-        bomb.setCollideWorldBounds(true);
-        bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
-        bomb.allowGravity = false; //elle n’est pas soumise à la gravité
+        var bomb = bombs.create(x, 16, 'bomb')
+        bomb.setBounce(1)
+        bomb.setCollideWorldBounds(true)
+        bomb.setVelocity(Phaser.Math.Between(-200, 200), 20)
+        bomb.allowGravity = false //elle n’est pas soumise à la gravité
+        this.physics.add.overlap(bullets, bomb, shootBomb, null, this)
     }
-
-    function shootBomb(bullets, bomb) {
-
-    }
-
 }
 
 function update(time, delta) {
