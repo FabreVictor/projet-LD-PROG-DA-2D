@@ -24,13 +24,17 @@ new Phaser.Game(config);
 
 function preload() {
     this.load.image('sky', 'assets/sky.png')
+    this.load.image('blueshot', 'assets/tirbleu.png')
+    this.load.image('greenshot', 'assets/tirver.png')
+    this.load.image('redshot', 'assets/tirrouge.png')
     this.load.image('ground', 'assets/platform.png');
     this.load.image('star', 'assets/star.png');
     this.load.image('bomb', 'assets/bomb.png');
-    this.load.spritesheet('perso', 'assets/perso.png', {
-        frameWidth: 32,
-        frameHeight: 48
-    })
+    this.load.image('perso', 'assets/astromarin.png');
+    //this.load.spritesheet('perso', 'assets/perso.png', {
+    //frameWidth: 32,
+    //frameHeight: 32
+    //})
 }
 
 /*function create(){
@@ -44,7 +48,7 @@ let weaponsDef = {
         currentAmmo: 15,
         ammoBase: 15,
         image: "...../png",
-        bullet: "..../png",
+        bullet: "blueshot",
         bullet_speed: 2,
         cadence: 50,
         lifespan: 1000,
@@ -56,7 +60,7 @@ let weaponsDef = {
         currentAmmo: 15,
         ammoBase: 00,
         image: "...../png",
-        bullet: "..../png",
+        bullet: "greenshot",
         bullet_speed: 2,
         cadence: 50,
         lifespan: 1000,
@@ -67,7 +71,7 @@ let weaponsDef = {
         currentAmmo: 15,
         ammoBase: 00,
         image: "...../png",
-        bullet: "..../png",
+        bullet: "redshot",
         bullet_speed: 2,
         cadence: 1,
         lifespan: 75,
