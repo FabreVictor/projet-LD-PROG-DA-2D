@@ -39,13 +39,49 @@ function preload() {
 
   //game.tKey = game.input.keyboard.addKey( 't')
 }*/
+let weaponsDef = {
+    "rifle": {
+        currentAmmo: 15,
+        ammoBase: 15,
+        image: "...../png",
+        bullet: "..../png",
+        bullet_speed: 2,
+        cadence: 50,
+        lifespan: 1000,
+        damage: 2,
+        maxShot: 100,
+
+    },
+    "machinegun": {
+        currentAmmo: 15,
+        ammoBase: 00,
+        image: "...../png",
+        bullet: "..../png",
+        bullet_speed: 2,
+        cadence: 50,
+        lifespan: 1000,
+        damage: 2,
+        maxShot: 100,
+    },
+    "lasercutter": {
+        currentAmmo: 15,
+        ammoBase: 00,
+        image: "...../png",
+        bullet: "..../png",
+        bullet_speed: 2,
+        cadence: 1,
+        lifespan: 75,
+        damage: 2,
+        maxShot: 5000,
+    },
+}
 
 var platforms;
 var light
 var player;
 var cursors;
 var stars;
-var rifleAmmo = 15;
+var rifleAmmo = 1500;
 var bombs = false;
 var gameOver = false;
 var spacebar;
@@ -61,15 +97,16 @@ var lastFired = 0;
 var isDown = false;
 var mouseX = 0;
 var mouseY = 0;
+var UICam
 
 var playerSpeed
 playerSpeed = 200
 var maxShoot
-maxShoot = 50
+maxShoot = 5000
 var lifeShoot
-lifeShoot = 1000
+lifeShoot = 75
 var cadenceShoot
-cadenceShoot = 100
+cadenceShoot = 0
 
 
 
@@ -103,23 +140,22 @@ function create() {
 
     let sky = this.add.image(400, 300, 'sky')
 
-    const spectrum = Phaser.Display.Color.ColorSpectrum(128)
-    let radius = 128
-    let intensity = 1
-    let colorIndex = 12
-    light = this.add.pointlight(400, 300, 0, radius, intensity)
-    let color = spectrum[colorIndex]
-    light.color.setTo(color.r, color.g, color.b)
+
+
 
     platforms = this.physics.add.staticGroup();
     platforms.create(400, 568, 'ground').setScale(2).refreshBody();
     platforms.create(600, 400, 'ground');
     platforms.create(50, 250, 'ground');
     platforms.create(750, 220, 'ground');
-    player = this.physics.add.sprite(100, 450, 'perso');
-    player.setBounce(0);
-    player.setCollideWorldBounds(true);
-    this.physics.add.collider(player, platforms);
+
+    // Player definition
+    player = this.physics.add.sprite(100, 450, 'perso')
+    player.setBounce(0)
+    player.setCollideWorldBounds(true)
+    player.weapon = Object.assign({}, weaponsDef.rifle)
+
+    this.physics.add.collider(player, platforms)
 
     this.anims.create({
         key: 'left',
@@ -147,12 +183,17 @@ function create() {
         frameRate: 10,
         repeat: -1
     });
-    cursors = this.input.keyboard.createCursorKeys();
+    cursors = this.input.keyboard.createCursorKeys()
+
+    //affiche un texte à l’écran, pour le score
+    // Text ammo 
     scoreText = this.add.text(16, 16, 'Rifle Ammo: ' + rifleAmmo, {
         fontSize: '32px',
         fill: '#000'
     });
-    //affiche un texte à l’écran, pour le score
+    scoreText.setColor('white')
+    scoreText.setScrollFactor(1)
+
     stars = this.physics.add.group({
         key: 'star',
         repeat: 11,
@@ -255,7 +296,10 @@ function create() {
     this.physics.world.setBounds(0, 0, 3200, 600)
     this.cameras.main.setBounds(0, 0, 3200, 600)
     this.cameras.main.startFollow(player)
+    this.cameras.main.ignore([scoreText])
 
+    UICam = this.cameras.add(0, 0, 3200, 600)
+    UICam.ignore([sky, platforms, player, stars])
 }
 
 //function shootBomb(bullets, platforms) {
@@ -275,7 +319,7 @@ function hitBomb(player, bomb) {
     gameOver = true;
     this.scene.restart()
     rifleAmmo = 15
-    scoreText.setText('Rifle Ammo: ' + ammo)
+    scoreText.setText('Rifle Ammo: ' + rifleAmmo)
 
 }
 
@@ -306,14 +350,13 @@ function collectStar(player, star) {
         bomb.setCollideWorldBounds(true)
         bomb.setVelocity(Phaser.Math.Between(-200, 200), 20)
         bomb.allowGravity = false //elle n’est pas soumise à la gravité
+        UICam.ignore([bomb])
     }
 }
 
 function update(time, delta) {
 
-    // Update light
-    light.x = player.x
-    light.y = player.y
+
 
     if (Phaser.Input.Keyboard.DownDuration(keyZ, 100000)) {
         player.setVelocityY(-playerSpeed);
@@ -337,6 +380,7 @@ function update(time, delta) {
     }
     if ((isDown && time > lastFired)) {
         var bullet = bullets.get();
+        UICam.ignore([bullet])
 
         if (bullet && rifleAmmo > 0) {
             bullet.fire(mouseX, mouseY);
