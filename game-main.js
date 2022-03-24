@@ -45,8 +45,8 @@ var light
 var player;
 var cursors;
 var stars;
-var ammo;
-ammo = 10
+var ammo = 15;
+
 var bombs = false;
 var gameOver = false;
 var spacebar;
