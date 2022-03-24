@@ -61,8 +61,8 @@ let weaponsDef = {
 
     },
     "machinegun": {
-        currentAmmo: 15,
-        ammoBase: 00,
+        currentAmmo: 150,
+        ammoBase: 150,
         image: "...../png",
         bullet: "greenshot",
         bullet_speed: 2,
@@ -72,8 +72,8 @@ let weaponsDef = {
         maxShot: 100,
     },
     "lasercutter": {
-        currentAmmo: 15,
-        ammoBase: 00,
+        currentAmmo: 10000,
+        ammoBase: 10000,
         image: "...../png",
         bullet: "redshot",
         bullet_speed: 2,
@@ -108,7 +108,7 @@ var mouseY = 0;
 var UICam
 
 var playerSpeed
-playerSpeed = 200
+playerSpeed = 100
 var maxShoot
 maxShoot = 5000
 var lifeShoot
@@ -159,7 +159,7 @@ function create() {
     platforms.create(750, 220, 'ground');
 
     // Player definition
-    player = this.physics.add.sprite(100, 450, 'perso')
+    player = this.physics.add.sprite(100, 450, 'perso').setScale(1.5).refreshBody();
     player.setBounce(0)
     player.setCollideWorldBounds(true)
     player.weaponIndex = 0
@@ -189,7 +189,7 @@ function create() {
 
     //affiche un texte à l’écran, pour le score
     // Text ammo 
-    scoreText = this.add.text(16, 16, 'Rifle Ammo: ' + rifleAmmo, {
+    scoreText = this.add.text(16, 16, (player.weaponName + 'Ammo: ' + player.weapon.currentAmmo), {
         fontSize: '32px',
         fill: '#000'
     })
@@ -232,27 +232,28 @@ function create() {
     var Bullet = new Phaser.Class({
         Extends: Phaser.GameObjects.Image,
         initialize: function Bullet(scene) {
-            Phaser.GameObjects.Image.call(this, scene, 0, 0, player.weapon.bullet);
+            Phaser.GameObjects.Image.call(this, scene, 0, 0, player.weapon.bullet)
 
-            this.incX = 0;
-            this.incY = 0;
-            this.lifespan = 0;
+            this.incX = 0
+            this.incY = 0
+            this.lifespan = 0
 
-            this.speed = Phaser.Math.GetSpeed(600, 1);
+            this.speed = Phaser.Math.GetSpeed(600, 1)
         },
         fire: function(x, y) {
-            this.setActive(true);
-            this.setVisible(true);
+            this.setTexture(player.weapon.bullet)
+            this.setActive(true)
+            this.setVisible(true)
 
             //  Bullets fire from the middle of the screen to the given x/y
-            this.setPosition(player.x, player.y);
 
             var angle = Phaser.Math.Angle.Between(x, y, player.x - player.xcamera, player.y - player.ycamera)
+            this.setRotation(angle)
 
-            this.setRotation(angle);
+            this.incX = Math.cos(angle)
+            this.incY = Math.sin(angle)
 
-            this.incX = Math.cos(angle);
-            this.incY = Math.sin(angle);
+            this.setPosition(player.x - (this.incX * 40), player.y - (this.incY * 40))
 
             this.lifespan = player.weapon.lifespan; //porté tir
         },
@@ -320,7 +321,7 @@ function hitBomb(player, bomb) {
     gameOver = true;
     this.scene.restart()
     rifleAmmo = 15
-    scoreText.setText(player.weapon + 'Ammo: ' + rifleAmmo)
+    scoreText.setText(player.weaponName + 'Ammo: ' + player.weapon.baseAmmo)
 
 }
 
@@ -337,7 +338,7 @@ function shootBomb(bullet, bomb) {
 function collectStar(player, star) {
     star.disableBody(true, true); // l’étoile disparaît
     rifleAmmo += 10; //augmente le score de 10
-    scoreText.setText(player.weapon + 'Ammo: ' + rifleAmmo); //met à jour l’affichage du score 
+    scoreText.setText(player.weaponName + 'Ammo: ' + player.weapon.currentAmmo); //met à jour l’affichage du score 
     if (stars.countActive(true) === 0) { // si toutes les étoiles sont prises
         stars.children.iterate(function(child) {
             child.enableBody(true, child.x, 0, true, true);
@@ -356,6 +357,15 @@ function collectStar(player, star) {
 }
 
 function update(time, delta) {
+
+    if (Phaser.Input.Keyboard.JustDown(keyT)) {
+        player.weaponIndex += 1
+        scoreText.setText(player.weaponName + 'Ammo: ' + player.weapon.currentAmmo);
+        if (player.weaponIndex >= weaponsList.length) {
+            player.weaponIndex = 0
+        }
+        updatePlayerWeapon(player)
+    }
 
     if (Phaser.Input.Keyboard.DownDuration(keyZ, 100000)) {
         player.setVelocityY(-playerSpeed)
@@ -392,8 +402,8 @@ function update(time, delta) {
 
         if (bullet && player.weapon.currentAmmo > 0) {
             bullet.fire(mouseX, mouseY);
-            rifleAmmo--;
-            scoreText.setText(player.weapon + 'Ammo: ' + rifleAmmo); //met à jour l’affichage du score 
+            player.weapon.currentAmmo--;
+            scoreText.setText(player.weaponName + 'Ammo: ' + player.weapon.currentAmmo); //met à jour l’affichage du score 
             lastFired = time + player.weapon.cadence; //duréé de la rafale
         }
     }
