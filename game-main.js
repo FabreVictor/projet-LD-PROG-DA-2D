@@ -45,8 +45,7 @@ var light
 var player;
 var cursors;
 var stars;
-var ammo = 15;
-
+var rifleAmmo = 15;
 var bombs = false;
 var gameOver = false;
 var spacebar;
@@ -101,6 +100,7 @@ function checkJump(player) {
 
 function create() {
 
+
     let sky = this.add.image(400, 300, 'sky')
 
     const spectrum = Phaser.Display.Color.ColorSpectrum(128)
@@ -117,9 +117,10 @@ function create() {
     platforms.create(50, 250, 'ground');
     platforms.create(750, 220, 'ground');
     player = this.physics.add.sprite(100, 450, 'perso');
-    player.setBounce(0.2);
+    player.setBounce(0);
     player.setCollideWorldBounds(true);
     this.physics.add.collider(player, platforms);
+
     this.anims.create({
         key: 'left',
         frames: this.anims.generateFrameNumbers('perso', {
@@ -147,7 +148,7 @@ function create() {
         repeat: -1
     });
     cursors = this.input.keyboard.createCursorKeys();
-    scoreText = this.add.text(16, 16, 'ammo : ' + ammo, {
+    scoreText = this.add.text(16, 16, 'Rifle Ammo: ' + rifleAmmo, {
         fontSize: '32px',
         fill: '#000'
     });
@@ -174,7 +175,6 @@ function create() {
     bombs = this.physics.add.group();
     this.physics.add.collider(bombs, platforms);
     this.physics.add.collider(player, bombs, hitBomb, null, this);
-
 
 
     this.input.keyboard.enabled = true
@@ -204,7 +204,7 @@ function create() {
             //  Bullets fire from the middle of the screen to the given x/y
             this.setPosition(player.x, player.y);
 
-            var angle = Phaser.Math.Angle.Between(x, y, player.x, player.y);
+            var angle = Phaser.Math.Angle.Between(x, y, player.x - player.xcamera, player.y - player.ycamera)
 
             this.setRotation(angle);
 
@@ -251,7 +251,10 @@ function create() {
 
         isDown = false;
 
-    });
+    })
+    this.physics.world.setBounds(0, 0, 3200, 600)
+    this.cameras.main.setBounds(0, 0, 3200, 600)
+    this.cameras.main.startFollow(player)
 
 }
 
@@ -270,6 +273,10 @@ function hitBomb(player, bomb) {
     player.setTint(0xff0000);
     player.anims.play('turn');
     gameOver = true;
+    this.scene.restart()
+    rifleAmmo = 15
+    scoreText.setText('Rifle Ammo: ' + ammo)
+
 }
 
 function shootWall(bullet) {
@@ -284,8 +291,8 @@ function shootBomb(bullet, bomb) {
 
 function collectStar(player, star) {
     star.disableBody(true, true); // l’étoile disparaît
-    ammo += 10; //augmente le score de 10
-    scoreText.setText('Ammo: ' + ammo); //met à jour l’affichage du score 
+    rifleAmmo += 10; //augmente le score de 10
+    scoreText.setText('Rifle Ammo: ' + rifleAmmo); //met à jour l’affichage du score 
     if (stars.countActive(true) === 0) { // si toutes les étoiles sont prises
         stars.children.iterate(function(child) {
             child.enableBody(true, child.x, 0, true, true);
@@ -331,15 +338,17 @@ function update(time, delta) {
     if ((isDown && time > lastFired)) {
         var bullet = bullets.get();
 
-        if (bullet && ammo > 0) {
+        if (bullet && rifleAmmo > 0) {
             bullet.fire(mouseX, mouseY);
-            ammo--;
-            scoreText.setText('Ammo: ' + ammo); //met à jour l’affichage du score 
+            rifleAmmo--;
+            scoreText.setText('Riffle ammo: ' + rifleAmmo); //met à jour l’affichage du score 
             lastFired = time + cadenceShoot; //duréé de la rafale
         }
     }
 
-    player.setRotation(Phaser.Math.Angle.Between(mouseX, mouseY, player.x, player.y) - Math.PI / 2);
+    player.xcamera = Math.floor(this.cameras.main.worldView.x)
+    player.ycamera = Math.floor(this.cameras.main.worldView.y)
+    player.setRotation(Phaser.Math.Angle.Between(mouseX, mouseY, player.x - player.xcamera, player.y - player.ycamera) - Math.PI / 2)
 
 
     /*if (Phaser.Input.Keyboard.JustDown( doubleJump ) && player.body.touching.down){
