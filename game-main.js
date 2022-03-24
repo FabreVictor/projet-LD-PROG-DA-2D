@@ -1,7 +1,7 @@
 var config = {
     type: Phaser.AUTO,
-    width: 800,
-    height: 800,
+    width: 600,
+    height: 600,
     physics: {
         default: 'arcade',
         arcade: {
@@ -30,11 +30,14 @@ function preload() {
     this.load.image('ground', 'assets/platform.png');
     this.load.image('star', 'assets/star.png');
     this.load.image('bomb', 'assets/bomb.png');
-    this.load.image('perso', 'assets/astromarin.png');
-    //this.load.spritesheet('perso', 'assets/perso.png', {
-    //frameWidth: 32,
-    //frameHeight: 32
-    //})
+    this.load.spritesheet('persoiddle', 'assets/astromarin.png', {
+        frameWidth: 32,
+        frameHeight: 32
+    });
+    this.load.spritesheet('perso', 'assets/spriteastromarin.png', {
+        frameWidth: 32,
+        frameHeight: 32
+    })
 }
 
 /*function create(){
@@ -43,6 +46,7 @@ function preload() {
 
   //game.tKey = game.input.keyboard.addKey( 't')
 }*/
+let weaponsList = ["rifle", "machinegun", "lasercutter"]
 let weaponsDef = {
     "rifle": {
         currentAmmo: 15,
@@ -139,14 +143,15 @@ function checkJump(player) {
     }
 }
 
+function updatePlayerWeapon(player) {
+    player.weaponName = weaponsList[player.weaponIndex]
+    player.weapon = Object.assign({}, weaponsDef[player.weaponName])
+}
+
 function create() {
 
 
     let sky = this.add.image(400, 300, 'sky')
-
-
-
-
     platforms = this.physics.add.staticGroup();
     platforms.create(400, 568, 'ground').setScale(2).refreshBody();
     platforms.create(600, 400, 'ground');
@@ -157,32 +162,25 @@ function create() {
     player = this.physics.add.sprite(100, 450, 'perso')
     player.setBounce(0)
     player.setCollideWorldBounds(true)
-    player.weapon = Object.assign({}, weaponsDef.rifle)
+    player.weaponIndex = 0
+    updatePlayerWeapon(player)
 
     this.physics.add.collider(player, platforms)
 
     this.anims.create({
-        key: 'left',
+        key: 'moving',
         frames: this.anims.generateFrameNumbers('perso', {
             start: 0,
-            end: 3
+            end: 7
         }),
         frameRate: 10,
         repeat: -1
     });
     this.anims.create({
-        key: 'turn',
-        frames: [{
-            key: 'perso',
-            frame: 4
-        }],
-        frameRate: 20
-    });
-    this.anims.create({
-        key: 'right',
-        frames: this.anims.generateFrameNumbers('perso', {
-            start: 5,
-            end: 8
+        key: 'iddle',
+        frames: this.anims.generateFrameNumbers('persoiddle', {
+            start: 0,
+            end: 0
         }),
         frameRate: 10,
         repeat: -1
@@ -194,7 +192,7 @@ function create() {
     scoreText = this.add.text(16, 16, 'Rifle Ammo: ' + rifleAmmo, {
         fontSize: '32px',
         fill: '#000'
-    });
+    })
     scoreText.setColor('white')
     scoreText.setScrollFactor(1)
 
@@ -234,7 +232,7 @@ function create() {
     var Bullet = new Phaser.Class({
         Extends: Phaser.GameObjects.Image,
         initialize: function Bullet(scene) {
-            Phaser.GameObjects.Image.call(this, scene, 0, 0, 'bomb');
+            Phaser.GameObjects.Image.call(this, scene, 0, 0, player.weapon.bullet);
 
             this.incX = 0;
             this.incY = 0;
@@ -256,7 +254,7 @@ function create() {
             this.incX = Math.cos(angle);
             this.incY = Math.sin(angle);
 
-            this.lifespan = lifeShoot; //porté tir
+            this.lifespan = player.weapon.lifespan; //porté tir
         },
         update: function(time, delta) {
             this.lifespan -= delta;
@@ -272,7 +270,7 @@ function create() {
     })
     bullets = this.physics.add.group({
         classType: Bullet,
-        maxSize: maxShoot, //munition max afficher a l'ecran
+        maxSize: player.weapon.maxShot, //munition max afficher a l'ecran
         runChildUpdate: true
     })
     this.physics.add.overlap(bullets, bombs, shootBomb, null, this)
@@ -318,12 +316,11 @@ function create() {
 
 function hitBomb(player, bomb) {
     this.physics.pause();
-    player.setTint(0xff0000);
-    player.anims.play('turn');
+    player.setTint(0xff0000)
     gameOver = true;
     this.scene.restart()
     rifleAmmo = 15
-    scoreText.setText('Rifle Ammo: ' + rifleAmmo)
+    scoreText.setText(player.weapon + 'Ammo: ' + rifleAmmo)
 
 }
 
@@ -340,7 +337,7 @@ function shootBomb(bullet, bomb) {
 function collectStar(player, star) {
     star.disableBody(true, true); // l’étoile disparaît
     rifleAmmo += 10; //augmente le score de 10
-    scoreText.setText('Rifle Ammo: ' + rifleAmmo); //met à jour l’affichage du score 
+    scoreText.setText(player.weapon + 'Ammo: ' + rifleAmmo); //met à jour l’affichage du score 
     if (stars.countActive(true) === 0) { // si toutes les étoiles sont prises
         stars.children.iterate(function(child) {
             child.enableBody(true, child.x, 0, true, true);
@@ -360,37 +357,44 @@ function collectStar(player, star) {
 
 function update(time, delta) {
 
-
-
     if (Phaser.Input.Keyboard.DownDuration(keyZ, 100000)) {
-        player.setVelocityY(-playerSpeed);
-        player.anims.play('right', true);
+        player.setVelocityY(-playerSpeed)
+        player.moving = true
+        player.anims.play('moving', true)
     } else if (Phaser.Input.Keyboard.DownDuration(keyS, 100000)) {
-        player.setVelocityY(playerSpeed);
-        player.anims.play('right', true);
+        player.setVelocityY(playerSpeed)
+        player.anims.play('moving', true)
+        player.moving = true
     } else {
-        player.setVelocityY(0);
-        player.anims.play('turn');
+        player.setVelocityY(0)
+        player.moving = false
     }
     if (Phaser.Input.Keyboard.DownDuration(keyD, 100000)) {
-        player.setVelocityX(playerSpeed);
-        player.anims.play('right', true);
+        player.setVelocityX(playerSpeed)
+        player.anims.play('moving', true)
+        player.moving = true
     } else if (Phaser.Input.Keyboard.DownDuration(keyQ, 100000)) {
-        player.setVelocityX(-playerSpeed);
-        player.anims.play('right', true);
+        player.setVelocityX(-playerSpeed)
+        player.anims.play('moving', true)
+        player.moving = true
     } else {
-        player.setVelocityX(0);
-        player.anims.play('turn');
+        player.setVelocityX(0)
+        player.moving = false
+    }
+    //console.log(player, player.velocityX, player.velocityY)
+    if (player.moving == false) {
+        console.log("IDDLE")
+        player.anims.play('iddle', true)
     }
     if ((isDown && time > lastFired)) {
         var bullet = bullets.get();
         UICam.ignore([bullet])
 
-        if (bullet && rifleAmmo > 0) {
+        if (bullet && player.weapon.currentAmmo > 0) {
             bullet.fire(mouseX, mouseY);
             rifleAmmo--;
-            scoreText.setText('Riffle ammo: ' + rifleAmmo); //met à jour l’affichage du score 
-            lastFired = time + cadenceShoot; //duréé de la rafale
+            scoreText.setText(player.weapon + 'Ammo: ' + rifleAmmo); //met à jour l’affichage du score 
+            lastFired = time + player.weapon.cadence; //duréé de la rafale
         }
     }
 
