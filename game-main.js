@@ -85,7 +85,7 @@ let weaponsDef = {
 }
 
 var platforms;
-var light
+var light;
 var player;
 var cursors;
 var stars;
