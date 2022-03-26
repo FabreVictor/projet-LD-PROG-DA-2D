@@ -30,18 +30,25 @@ function preload() {
     this.load.image('ground', 'assets/platform.png');
     this.load.image('star', 'assets/star.png');
     this.load.image('bomb', 'assets/bomb.png');
+
+    this.load.spritesheet('foot', 'assets/foot.png', {
+        frameWidth: 32,
+        frameHeight: 32
+    })
     this.load.spritesheet('persoiddle', 'assets/astromarin.png', {
         frameWidth: 32,
         frameHeight: 32
     });
-    this.load.spritesheet('perso', 'assets/spriteastromarin.png', {
+    let perso = this.load.spritesheet('perso', 'assets/spriteastromarin.png', {
         frameWidth: 32,
         frameHeight: 32
     })
-    this.load.spritesheet('monstre', 'assets/monstresprite.png', {
+    this.load.spritesheet('monstre', 'assets/monstre.png', {
         frameWidth: 32,
         frameHeight: 32
     })
+
+
 }
 
 /*function create(){
@@ -166,11 +173,49 @@ function create() {
     player = this.physics.add.sprite(100, 450, 'perso').setScale(1.5).refreshBody();
     player.setBounce(0)
     player.setCollideWorldBounds(true)
+    player.setDepth(10)
     player.weaponIndex = 0
     updatePlayerWeapon(player)
 
     this.physics.add.collider(player, platforms)
 
+    this.anims.create({
+        key: 'monstreMove',
+        frames: this.anims.generateFrameNumbers('monstre', {
+            start: 0,
+            end: 3
+        }),
+        frameRate: 3,
+        repeat: -1
+    });
+    this.anims.create({
+        key: 'footside',
+        frames: this.anims.generateFrameNumbers('foot', {
+            start: 0,
+            end: 15
+        }),
+        frameRate: 10,
+        repeat: -1
+
+    });
+    this.anims.create({
+        key: 'footup',
+        frames: this.anims.generateFrameNumbers('foot', {
+            start: 16,
+            end: 31
+        }),
+        frameRate: 10,
+        repeat: -1
+    });
+    this.anims.create({
+        key: 'footiddle',
+        frames: this.anims.generateFrameNumbers('foot', {
+            start: 0,
+            end: 0
+        }),
+        frameRate: 10,
+        repeat: -1
+    });
     this.anims.create({
         key: 'moving',
         frames: this.anims.generateFrameNumbers('perso', {
@@ -189,15 +234,8 @@ function create() {
         frameRate: 10,
         repeat: -1
     });
-    this.anims.create({
-        key: 'monstreMove',
-        frames: this.anims.generateFrameNumbers('monstre', {
-            start: 0,
-            end: 4
-        }),
-        frameRate: 10,
-        repeat: -1
-    });
+
+
     cursors = this.input.keyboard.createCursorKeys()
 
     //affiche un texte à l’écran, pour le score
@@ -241,6 +279,11 @@ function create() {
     keyD = this.input.keyboard.addKey('d');
     keyS = this.input.keyboard.addKey('s');
     doubleJump = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
+
+    player.playerFoot = this.physics.add.sprite(100, 450, 'foot').setScale(1.5).refreshBody();
+    player.setBounce(0)
+    player.setCollideWorldBounds(true)
+    player.playerFoot.setDepth(0)
 
     var Bullet = new Phaser.Class({
         Extends: Phaser.GameObjects.Image,
@@ -315,7 +358,7 @@ function create() {
     this.cameras.main.ignore([scoreText])
 
     UICam = this.cameras.add(0, 0, 3200, 600)
-    UICam.ignore([sky, platforms, player, stars])
+    UICam.ignore([sky, platforms, player, player.playerFoot, stars])
 }
 
 //function shootBomb(bullets, platforms) {
@@ -372,6 +415,7 @@ function collectStar(player, star) {
 
 function update(time, delta) {
 
+
     if (Phaser.Input.Keyboard.JustDown(keyT)) {
         player.weaponIndex += 1
         scoreText.setText(player.weaponName + 'Ammo: ' + player.weapon.currentAmmo);
@@ -383,32 +427,42 @@ function update(time, delta) {
 
     if (Phaser.Input.Keyboard.DownDuration(keyZ, 100000)) {
         player.setVelocityY(-playerSpeed)
-        player.moving = true
+        player.movingy = true
+        player.playerFoot.anims.play('footup', true)
         player.anims.play('moving', true)
+
+
     } else if (Phaser.Input.Keyboard.DownDuration(keyS, 100000)) {
         player.setVelocityY(playerSpeed)
+        player.movingy = true
+        player.playerFoot.anims.play('footup', true)
         player.anims.play('moving', true)
-        player.moving = true
+
     } else {
         player.setVelocityY(0)
-        player.moving = false
+        player.movingy = false
     }
     if (Phaser.Input.Keyboard.DownDuration(keyD, 100000)) {
         player.setVelocityX(playerSpeed)
+        player.movingx = true
+        player.playerFoot.anims.play('footside', true)
         player.anims.play('moving', true)
-        player.moving = true
+
     } else if (Phaser.Input.Keyboard.DownDuration(keyQ, 100000)) {
         player.setVelocityX(-playerSpeed)
+        player.movingx = true
+        player.playerFoot.anims.play('footside', true)
         player.anims.play('moving', true)
-        player.moving = true
+
     } else {
         player.setVelocityX(0)
-        player.moving = false
+        player.movingx = false
     }
     //console.log(player, player.velocityX, player.velocityY)
-    if (player.moving == false) {
+    if (player.movingx == false && player.movingy == false) {
         console.log("IDDLE")
         player.anims.play('iddle', true)
+        player.playerFoot.anims.play('footiddle', true)
     }
     if ((isDown && time > lastFired)) {
         var bullet = bullets.get();
@@ -420,12 +474,15 @@ function update(time, delta) {
             scoreText.setText(player.weaponName + 'Ammo: ' + player.weapon.currentAmmo); //met à jour l’affichage du score 
             lastFired = time + player.weapon.cadence; //duréé de la rafale
         }
+
     }
 
     player.xcamera = Math.floor(this.cameras.main.worldView.x)
     player.ycamera = Math.floor(this.cameras.main.worldView.y)
     player.setRotation(Phaser.Math.Angle.Between(mouseX, mouseY, player.x - player.xcamera, player.y - player.ycamera) - Math.PI / 2)
-
+    player.playerFoot.x = player.x
+    player.playerFoot.y = player.y
+    player.setDepth(10)
 
     /*if (Phaser.Input.Keyboard.JustDown( doubleJump ) && player.body.touching.down){
         //si touche haut appuyée ET que le perso touche le sol
