@@ -38,6 +38,10 @@ function preload() {
         frameWidth: 32,
         frameHeight: 32
     })
+    this.load.spritesheet('monstre', 'assets/monstresprite.png', {
+        frameWidth: 32,
+        frameHeight: 32
+    })
 }
 
 /*function create(){
@@ -90,7 +94,7 @@ var player;
 var cursors;
 var stars;
 var rifleAmmo = 1500;
-var bombs = false;
+var monstres = false;
 var gameOver = false;
 var spacebar;
 var keyT;
@@ -185,6 +189,15 @@ function create() {
         frameRate: 10,
         repeat: -1
     });
+    this.anims.create({
+        key: 'monstreMove',
+        frames: this.anims.generateFrameNumbers('monstre', {
+            start: 0,
+            end: 4
+        }),
+        frameRate: 10,
+        repeat: -1
+    });
     cursors = this.input.keyboard.createCursorKeys()
 
     //affiche un texte à l’écran, pour le score
@@ -215,9 +228,9 @@ function create() {
     this.physics.add.overlap(player, stars, collectStar, null, this);
     //le contact perso/étoile ne génère pas de collision (overlap)
     //mais en revanche cela déclenche une fonction collectStar
-    bombs = this.physics.add.group();
-    this.physics.add.collider(bombs, platforms);
-    this.physics.add.collider(player, bombs, hitBomb, null, this);
+    monstres = this.physics.add.group();
+    this.physics.add.collider(monstres, platforms);
+    this.physics.add.collider(player, monstres, hitMonstre, null, this);
 
 
     this.input.keyboard.enabled = true
@@ -274,7 +287,7 @@ function create() {
         maxSize: player.weapon.maxShot, //munition max afficher a l'ecran
         runChildUpdate: true
     })
-    this.physics.add.overlap(bullets, bombs, shootBomb, null, this)
+    this.physics.add.overlap(bullets, monstres, shootMonstre, null, this)
     this.physics.add.collider(bullets, platforms, shootWall, null, this);
     this.input.on('pointerdown', function(pointer) {
 
@@ -315,7 +328,7 @@ function create() {
 //gameOver = true;
 //}
 
-function hitBomb(player, bomb) {
+function hitMonstre(player, monstre) {
     this.physics.pause();
     player.setTint(0xff0000)
     gameOver = true;
@@ -329,10 +342,10 @@ function shootWall(bullet) {
     bullet.lifespan = 0
 }
 
-function shootBomb(bullet, bomb) {
+function shootMonstre(bullet, monstre) {
     console.log("ici")
     bullet.lifespan = 0
-    bomb.disableBody(true, true)
+    monstre.disableBody(true, true)
 }
 
 function collectStar(player, star) {
@@ -347,12 +360,13 @@ function collectStar(player, star) {
             Phaser.Math.Between(400, 400);
         // si le perso est à gauche de l’écran, on met une bombe à droite
         // si non, on la met à gauche de l’écran
-        var bomb = bombs.create(x, 16, 'bomb')
-        bomb.setBounce(1)
-        bomb.setCollideWorldBounds(true)
-        bomb.setVelocity(Phaser.Math.Between(-200, 200), 20)
-        bomb.allowGravity = false //elle n’est pas soumise à la gravité
-        UICam.ignore([bomb])
+        var monstre = monstres.create(x, 16, 'bomb')
+        monstre.anims.play('monstreMove', true)
+        monstre.setBounce(1)
+        monstre.setCollideWorldBounds(true)
+        monstre.setVelocity(Phaser.Math.Between(-200, 200), 20)
+        monstre.allowGravity = false //elle n’est pas soumise à la gravité
+        UICam.ignore([monstre])
     }
 }
 
