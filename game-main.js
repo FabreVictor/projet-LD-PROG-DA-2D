@@ -54,6 +54,7 @@ function preload() {
 /*function create(){
   this.add.image(400, 300, 'sky');
   this.add.image(400, 300, 'star');
+
   //game.tKey = game.input.keyboard.addKey( 't')
 }*/
 let weaponsList = ["rifle", "machinegun", "lasercutter"]
