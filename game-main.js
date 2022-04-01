@@ -2,6 +2,7 @@ var config = {
     type: Phaser.AUTO,
     width: 600,
     height: 600,
+    pixelArt: true,
     physics: {
         default: 'arcade',
         arcade: {
@@ -23,6 +24,10 @@ var config = {
 new Phaser.Game(config);
 
 function preload() {
+
+    this.load.tilemapTiledJSON("carte", "assets/testedelv2.json");
+    this.load.image("tiles", "assets/floor.png")
+
     this.load.image('sky', 'assets/sky.png')
     this.load.image('blueshot', 'assets/tirbleu.png')
     this.load.image('greenshot', 'assets/tirver.png')
@@ -34,7 +39,7 @@ function preload() {
     this.load.spritesheet('foot', 'assets/foot.png', {
         frameWidth: 32,
         frameHeight: 32
-    })
+    });
     this.load.spritesheet('persoiddle', 'assets/astromarin.png', {
         frameWidth: 32,
         frameHeight: 32
@@ -60,19 +65,19 @@ function preload() {
 let weaponsList = ["rifle", "machinegun", "lasercutter"]
 let weaponsDef = {
     "rifle": {
-        currentAmmo: 15,
+        currentAmmo: 150,
         ammoBase: 15,
         image: "...../png",
         bullet: "blueshot",
         bullet_speed: 2,
-        cadence: 50,
+        cadence: 500,
         lifespan: 1000,
         damage: 2,
         maxShot: 100,
 
     },
     "machinegun": {
-        currentAmmo: 150,
+        currentAmmo: 1500,
         ammoBase: 150,
         image: "...../png",
         bullet: "greenshot",
@@ -161,13 +166,24 @@ function updatePlayerWeapon(player) {
 
 function create() {
 
+    const carteDuNiveau = this.add.tilemap("carte");
 
-    let sky = this.add.image(400, 300, 'sky')
-    platforms = this.physics.add.staticGroup();
-    platforms.create(400, 568, 'ground').setScale(2).refreshBody();
-    platforms.create(600, 400, 'ground');
-    platforms.create(50, 250, 'ground');
-    platforms.create(750, 220, 'ground');
+    const tileset = carteDuNiveau.addTilesetImage(
+        "floor",
+        "tiles"
+    );
+    this.vaiseau = carteDuNiveau.createStaticLayer(
+        "CalquedeTuiles1",
+        tileset
+    );
+    this.vaiseau.setScale(1.5)
+
+    //let sky = this.add.image(400, 300, 'sky')
+    //platforms = this.physics.add.staticGroup();
+    //platforms.create(400, 568, 'ground').setScale(2).refreshBody();
+    //platforms.create(600, 400, 'ground');
+    //platforms.create(50, 250, 'ground');
+    //platforms.create(750, 220, 'ground');
 
     // Player definition
     player = this.physics.add.sprite(100, 450, 'perso').setScale(1.5).refreshBody();
@@ -352,13 +368,14 @@ function create() {
         isDown = false;
 
     })
-    this.physics.world.setBounds(0, 0, 3200, 600)
-    this.cameras.main.setBounds(0, 0, 3200, 600)
+    this.physics.world.setBounds(0, 0, 3200, 3200)
+    this.cameras.main.setBounds(0, 0, 3200, 3200)
     this.cameras.main.startFollow(player)
     this.cameras.main.ignore([scoreText])
 
     UICam = this.cameras.add(0, 0, 3200, 600)
-    UICam.ignore([sky, platforms, player, player.playerFoot, stars])
+        //UICam.ignore([sky, platforms, player, player.playerFoot, stars])
+    UICam.ignore([player, player.playerFoot, stars])
 }
 
 //function shootBomb(bullets, platforms) {
