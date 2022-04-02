@@ -1,3 +1,4 @@
+/********************************************************* */
 var config = {
     type: Phaser.AUTO,
     width: 600,
@@ -21,17 +22,19 @@ var config = {
 };
 
 
+/********************************************************* */
 new Phaser.Game(config);
 
+/********************************************************* */
 function preload() {
 
     this.load.tilemapTiledJSON("carte", "assets/testedelv2.json");
     this.load.image("tiles", "assets/floor.png")
 
     this.load.image('sky', 'assets/sky.png')
-    this.load.image('blueshot', 'assets/tirbleu.png')
-    this.load.image('greenshot', 'assets/tirver.png')
-    this.load.image('redshot', 'assets/tirrouge.png')
+        //this.load.image('blueshot', 'assets/tirbleu.png')
+        //this.load.image('greenshot', 'assets/tirver.png')
+        //this.load.image('redshot', 'assets/tirrouge.png')
     this.load.image('ground', 'assets/platform.png');
     this.load.image('star', 'assets/star.png');
     this.load.image('bomb', 'assets/bomb.png');
@@ -52,17 +55,26 @@ function preload() {
         frameWidth: 32,
         frameHeight: 32
     })
+    this.load.spritesheet('blueshot', 'assets/tirbleu.png', {
+        frameWidth: 32,
+        frameHeight: 32
+    });
+    this.load.spritesheet('greenshot', 'assets/tirver.png', {
+        frameWidth: 32,
+        frameHeight: 32
+
+    });
+    this.load.spritesheet('redshot', 'assets/tirrouge.png', {
+        frameWidth: 32,
+        frameHeight: 32
+    });
 
 
 }
 
-/*function create(){
-  this.add.image(400, 300, 'sky');
-  this.add.image(400, 300, 'star');
-
-  //game.tKey = game.input.keyboard.addKey( 't')
-}*/
-let weaponsList = ["rifle", "machinegun", "lasercutter"]
+/********************************************************* */
+let weaponsList = ["rifle", "lasercutter", "machinegun"]
+let weaponsAvailable = ["rifle"]
 let weaponsDef = {
     "rifle": {
         currentAmmo: 150,
@@ -100,7 +112,7 @@ let weaponsDef = {
     },
 }
 
-var platforms;
+/********************************************************* */
 var light;
 var player;
 var cursors;
@@ -122,6 +134,7 @@ var isDown = false;
 var mouseX = 0;
 var mouseY = 0;
 var UICam
+var currentScene
 
 var playerSpeed
 playerSpeed = 100
@@ -132,9 +145,7 @@ lifeShoot = 75
 var cadenceShoot
 cadenceShoot = 0
 
-
-
-
+/********************************************************* */
 function checkDash(player, direction, velocity) {
     if ((Phaser.Input.Keyboard.JustDown(spacebar))) {
         //console.log("DASH ON")
@@ -144,6 +155,7 @@ function checkDash(player, direction, velocity) {
     }
 }
 
+/********************************************************* */
 function checkJump(player) {
     if (player.jumpCount == undefined) {
         player.jumpCount = 0;
@@ -159,41 +171,104 @@ function checkJump(player) {
     }
 }
 
+/********************************************************* */
 function updatePlayerWeapon(player) {
     player.weaponName = weaponsList[player.weaponIndex]
-    player.weapon = Object.assign({}, weaponsDef[player.weaponName])
+    player.weapon = player.weaponList[player.weaponName]
 }
 
-function create() {
+/********************************************************* */
+function collectBonus(player, bonus) {
+    console.log("Bonus collected!!!", player, bonus)
+    if (bonus == undefined || bonus.properties == undefined) return
+    if (bonus.properties.typeBonus == "ammo") {
+        bonus.destroy()
+        currentScene.collectible.removeTileAt(bonus.x, bonus.y)
+            //bonus.disableBody(true, true)
+        player.weapon.currentAmmo += 10
+        console.log("AMMO")
+        scoreText.setText(player.weaponName + 'Ammo: ' + player.weapon.currentAmmo);
+        return
+    }
+    if (bonus.properties.typeBonus == "gun") {
+        bonus.destroy()
+        currentScene.collectible.removeTileAt(bonus.x, bonus.y)
+        if (weaponsAvailable.length == 2) {
+            weaponsAvailable.push("machinegun")
+        }
+        if (weaponsAvailable.length == 1) {
+            weaponsAvailable.push("lasercutter")
+        }
+        return
+    }
+    if (bonus.properties.typeBonus == "pv") {
+        bonus.destroy()
+        currentScene.collectible.removeTileAt(bonus.x, bonus.y)
+        player.pv += 1
+        if (player.pv > 3)
+            player.pv = 3
+        pvText.setText('PV : ' + player.pv + '/3')
+        return
 
+    }
+    if (bonus.properties.typeBonus == "redkey") {
+        bonus.destroy()
+        currentScene.collectible.removeTileAt(bonus.x, bonus.y)
+        player.redKey = true
+        redKeyText.setText('red KEY')
+        return
+    }
+    //console.log("Bonus collected!!!", player, bonus)
+}
+
+/********************************************************* */
+function create() {
+    currentScene = this
     const carteDuNiveau = this.add.tilemap("carte");
 
     const tileset = carteDuNiveau.addTilesetImage(
         "floor",
         "tiles"
     );
-    this.vaiseau = carteDuNiveau.createStaticLayer(
+    this.vaisseau = carteDuNiveau.createStaticLayer(
         "CalquedeTuiles1",
         tileset
     );
-    this.vaiseau.setScale(1.5)
-
-    //let sky = this.add.image(400, 300, 'sky')
-    //platforms = this.physics.add.staticGroup();
-    //platforms.create(400, 568, 'ground').setScale(2).refreshBody();
-    //platforms.create(600, 400, 'ground');
-    //platforms.create(50, 250, 'ground');
-    //platforms.create(750, 220, 'ground');
-
-    // Player definition
-    player = this.physics.add.sprite(100, 450, 'perso').setScale(1.5).refreshBody();
+    this.cassable = carteDuNiveau.createStaticLayer(
+        "bloquecasable",
+        tileset
+    );
+    this.collectible = carteDuNiveau.createStaticLayer(
+        "colectible",
+        tileset
+    );
+    this.vaisseau.setScale(1.5)
+    this.cassable.setScale(1.5)
+    this.cassable.setDepth(10)
+    this.collectible.setScale(1.5)
+    this.collectible.setDepth(10)
+    this.vaisseau.setCollisionByProperty({ estSolide: true }, true)
+    this.collectible.setCollisionByProperty({ estCollectible: true }, true)
+    this.vaisseau.setDepth(8)
+        /*const debugGraphics = this.add.graphics().setAlpha(0.75)
+            this.vaisseau.renderDebug(debugGraphics, {
+                    tileColor: null, // Color of non-colliding tiles
+                    collidingTileColor: new Phaser.Display.Color(243, 134, 48, 255), // Color of colliding tiles
+                    faceColor: new Phaser.Display.Color(40, 39, 37, 255) // Color of colliding face edges
+                })*/
+        // Player definition
+    player = this.physics.add.sprite(500, 450, 'perso').setScale(1.5).refreshBody();
     player.setBounce(0)
     player.setCollideWorldBounds(true)
     player.setDepth(10)
+    player.pv = 1
+    player.redKey = false
     player.weaponIndex = 0
+    player.weaponList = Object.assign({}, weaponsDef)
     updatePlayerWeapon(player)
 
-    this.physics.add.collider(player, platforms)
+    this.physics.add.collider(player, this.vaisseau)
+    this.physics.add.collider(player, this.collectible, collectBonus, null, this)
 
     this.anims.create({
         key: 'monstreMove',
@@ -260,8 +335,20 @@ function create() {
         fontSize: '32px',
         fill: '#000'
     })
+    pvText = this.add.text(15, 64, ('PV : ' + player.pv + '/3'), {
+        fontSize: '32px',
+        fill: '#000'
+    })
+    redKeyText = this.add.text(15, 128, ('key missing'), {
+        fontSize: '32px',
+        fill: '#000'
+    })
+    redKeyText.setColor('red')
+    redKeyText.setScrollFactor(1)
     scoreText.setColor('white')
     scoreText.setScrollFactor(1)
+    pvText.setColor('green')
+    pvText.setScrollFactor(1)
 
     stars = this.physics.add.group({
         key: 'star',
@@ -277,13 +364,13 @@ function create() {
         child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
     }); //chaque étoile va rebondir un peu différemment
 
-    this.physics.add.collider(stars, platforms);
+    this.physics.add.collider(stars, this.vaisseau);
     //et collisionne avec les plateformes
     this.physics.add.overlap(player, stars, collectStar, null, this);
     //le contact perso/étoile ne génère pas de collision (overlap)
     //mais en revanche cela déclenche une fonction collectStar
     monstres = this.physics.add.group();
-    this.physics.add.collider(monstres, platforms);
+    this.physics.add.collider(monstres, this.vaisseau);
     this.physics.add.collider(player, monstres, hitMonstre, null, this);
 
 
@@ -296,10 +383,11 @@ function create() {
     keyS = this.input.keyboard.addKey('s');
     doubleJump = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
 
-    player.playerFoot = this.physics.add.sprite(100, 450, 'foot').setScale(1.5).refreshBody();
+    player.playerFoot = this.physics.add.sprite(100, 450, 'foot').setScale(1.5).refreshBody()
     player.setBounce(0)
     player.setCollideWorldBounds(true)
-    player.playerFoot.setDepth(0)
+    player.playerFoot.setDepth(9)
+    this.physics.add.collider(player.playerFoot, this.vaisseau)
 
     var Bullet = new Phaser.Class({
         Extends: Phaser.GameObjects.Image,
@@ -309,7 +397,7 @@ function create() {
             this.incX = 0
             this.incY = 0
             this.lifespan = 0
-
+            this.setDepth(8)
             this.speed = Phaser.Math.GetSpeed(600, 1)
         },
         fire: function(x, y) {
@@ -347,22 +435,21 @@ function create() {
         runChildUpdate: true
     })
     this.physics.add.overlap(bullets, monstres, shootMonstre, null, this)
-    this.physics.add.collider(bullets, platforms, shootWall, null, this);
+    this.physics.add.collider(bullets, this.vaisseau, shootWall, null, this)
+
     this.input.on('pointerdown', function(pointer) {
 
         isDown = true;
         mouseX = pointer.x;
         mouseY = pointer.y;
 
-    });
-
+    })
     this.input.on('pointermove', function(pointer) {
 
         mouseX = pointer.x;
         mouseY = pointer.y;
 
-    });
-
+    })
     this.input.on('pointerup', function(pointer) {
 
         isDown = false;
@@ -371,23 +458,13 @@ function create() {
     this.physics.world.setBounds(0, 0, 3200, 3200)
     this.cameras.main.setBounds(0, 0, 3200, 3200)
     this.cameras.main.startFollow(player)
-    this.cameras.main.ignore([scoreText])
+    this.cameras.main.ignore([scoreText, pvText])
 
     UICam = this.cameras.add(0, 0, 3200, 600)
-        //UICam.ignore([sky, platforms, player, player.playerFoot, stars])
-    UICam.ignore([player, player.playerFoot, stars])
+    UICam.ignore([player, player.playerFoot, stars, this.vaisseau, this.collectible, this.cassable])
 }
 
-//function shootBomb(bullets, platforms) {
-
-//}
-
-//function shootBomb(bullets, bomb) {
-//player.setTint(0xff0000);
-//player.anims.play('turn');
-//gameOver = true;
-//}
-
+/********************************************************* */
 function hitMonstre(player, monstre) {
     this.physics.pause();
     player.setTint(0xff0000)
@@ -398,16 +475,21 @@ function hitMonstre(player, monstre) {
 
 }
 
+/********************************************************* */
 function shootWall(bullet) {
+    console.log("'Wal")
+    bullet.destroy()
     bullet.lifespan = 0
 }
 
+/********************************************************* */
 function shootMonstre(bullet, monstre) {
     console.log("ici")
     bullet.lifespan = 0
     monstre.disableBody(true, true)
 }
 
+/********************************************************* */
 function collectStar(player, star) {
     star.disableBody(true, true); // l’étoile disparaît
     rifleAmmo += 10; //augmente le score de 10
@@ -430,16 +512,16 @@ function collectStar(player, star) {
     }
 }
 
+/********************************************************* */
 function update(time, delta) {
-
 
     if (Phaser.Input.Keyboard.JustDown(keyT)) {
         player.weaponIndex += 1
-        scoreText.setText(player.weaponName + 'Ammo: ' + player.weapon.currentAmmo);
-        if (player.weaponIndex >= weaponsList.length) {
+        if (player.weaponIndex >= weaponsAvailable.length) {
             player.weaponIndex = 0
         }
         updatePlayerWeapon(player)
+        scoreText.setText(player.weaponName + 'Ammo: ' + player.weapon.currentAmmo);
     }
 
     if (Phaser.Input.Keyboard.DownDuration(keyZ, 100000)) {
@@ -501,12 +583,4 @@ function update(time, delta) {
     player.playerFoot.y = player.y
     player.setDepth(10)
 
-    /*if (Phaser.Input.Keyboard.JustDown( doubleJump ) && player.body.touching.down){
-        //si touche haut appuyée ET que le perso touche le sol
-        player.setVelocityY(-330); //alors vitesse verticale négative
-        //(on saute)
-    if(Phaser.Input.Keyboard.JustDown( doubleJump ) && !player.body.touching.down)  {
-        player.setVelocityY(-330);
-    } 
-    }*/
 }
