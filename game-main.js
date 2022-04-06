@@ -226,13 +226,13 @@ function destroyProps(player, prop) {
     if (prop.properties.wallType == 'laser' && player.redKey == true) {
         console.log("LASER OPEN")
         prop.destroy()
-        currentScene.collectible.removeTileAt(prop.x, prop.y)
+        currentScene.cassable.removeTileAt(prop.x, prop.y)
         return
     }
     if (prop.properties.wallType == 'fissure' && player.weapons == 'lasercutter') {
         console.log("WALL DESTROY")
         prop.destroy()
-        currentScene.collectible.removeTileAt(prop.x, prop.y)
+        currentScene.cassable.removeTileAt(prop.x, prop.y)
         return
     }
 
@@ -286,6 +286,7 @@ function create() {
     updatePlayerWeapon(player)
 
     this.physics.add.collider(player, this.vaisseau)
+
     this.physics.add.collider(player, this.cassable, destroyProps, null, this)
     this.physics.add.collider(player, this.collectible, collectBonus, null, this)
 
@@ -449,6 +450,8 @@ function create() {
 
     })
 
+
+
     bullets = this.physics.add.group({
         classType: Bullet,
         maxSize: player.weapon.maxShot, //munition max afficher a l'ecran
@@ -497,9 +500,10 @@ function hitMonstre(player, monstre) {
 
 /********************************************************* */
 function shootWall(bullet) {
-    console.log("'Wal")
+    console.log("Wall")
     bullet.destroy()
     bullet.lifespan = 0
+
 }
 
 /********************************************************* */
