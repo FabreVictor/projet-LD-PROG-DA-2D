@@ -220,7 +220,24 @@ function collectBonus(player, bonus) {
     }
     //console.log("Bonus collected!!!", player, bonus)
 }
+/********************************************************* */
+function destroyProps(player, prop) {
+    console.log("TOUCH")
+    if (prop.properties.wallType == 'laser' && player.redKey == true) {
+        console.log("LASER OPEN")
+        prop.destroy()
+        currentScene.collectible.removeTileAt(prop.x, prop.y)
+        return
+    }
+    if (prop.properties.wallType == 'fissure' && player.weapons == 'lasercutter') {
+        console.log("WALL DESTROY")
+        prop.destroy()
+        currentScene.collectible.removeTileAt(prop.x, prop.y)
+        return
+    }
 
+
+}
 /********************************************************* */
 function create() {
     currentScene = this
@@ -269,7 +286,7 @@ function create() {
     updatePlayerWeapon(player)
 
     this.physics.add.collider(player, this.vaisseau)
-    this.physics.add.collider(player, this.cassable)
+    this.physics.add.collider(player, this.cassable, destroyProps, null, this)
     this.physics.add.collider(player, this.collectible, collectBonus, null, this)
 
     this.anims.create({
