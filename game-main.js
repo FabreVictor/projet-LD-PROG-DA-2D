@@ -375,7 +375,7 @@ function create() {
 
     UICam = this.cameras.add(0, 0, 3200, 600)
         //UICam.ignore([sky, platforms, player, player.playerFoot, stars])
-    UICam.ignore([player, player.playerFoot, stars])
+    UICam.ignore([player, player.playerFoot, stars, this.vaiseau])
 }
 
 //function shootBomb(bullets, platforms) {
