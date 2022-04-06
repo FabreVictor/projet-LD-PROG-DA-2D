@@ -1,8 +1,8 @@
 /********************************************************* */
 var config = {
     type: Phaser.AUTO,
-    width: 600,
-    height: 600,
+    width: 1920,
+    height: 1080,
     pixelArt: true,
     physics: {
         default: 'arcade',
@@ -81,7 +81,7 @@ let weaponsDef = {
         ammoBase: 15,
         image: "...../png",
         bullet: "blueshot",
-        bullet_speed: 2,
+        bullet_speed: 80,
         cadence: 500,
         lifespan: 1000,
         damage: 2,
@@ -93,7 +93,7 @@ let weaponsDef = {
         ammoBase: 150,
         image: "...../png",
         bullet: "greenshot",
-        bullet_speed: 2,
+        bullet_speed: 80,
         cadence: 50,
         lifespan: 1000,
         damage: 2,
@@ -104,7 +104,7 @@ let weaponsDef = {
         ammoBase: 10000,
         image: "...../png",
         bullet: "redshot",
-        bullet_speed: 2,
+        bullet_speed: 80,
         cadence: 1,
         lifespan: 75,
         damage: 2,
@@ -137,7 +137,7 @@ var UICam
 var currentScene
 
 var playerSpeed
-playerSpeed = 100
+playerSpeed = 500
 var maxShoot
 maxShoot = 5000
 var lifeShoot
@@ -242,12 +242,13 @@ function create() {
         "colectible",
         tileset
     );
-    this.vaisseau.setScale(1.5)
-    this.cassable.setScale(1.5)
+    this.vaisseau.setScale(4)
+    this.cassable.setScale(4)
     this.cassable.setDepth(10)
-    this.collectible.setScale(1.5)
+    this.collectible.setScale(4)
     this.collectible.setDepth(10)
     this.vaisseau.setCollisionByProperty({ estSolide: true }, true)
+    this.cassable.setCollisionByProperty({ estSolide: true }, true)
     this.collectible.setCollisionByProperty({ estCollectible: true }, true)
     this.vaisseau.setDepth(8)
         /*const debugGraphics = this.add.graphics().setAlpha(0.75)
@@ -257,7 +258,7 @@ function create() {
                     faceColor: new Phaser.Display.Color(40, 39, 37, 255) // Color of colliding face edges
                 })*/
         // Player definition
-    player = this.physics.add.sprite(500, 450, 'perso').setScale(1.5).refreshBody();
+    player = this.physics.add.sprite(500 * 2, 450 * 3, 'perso').setScale(4).refreshBody();
     player.setBounce(0)
     player.setCollideWorldBounds(true)
     player.setDepth(10)
@@ -268,6 +269,7 @@ function create() {
     updatePlayerWeapon(player)
 
     this.physics.add.collider(player, this.vaisseau)
+    this.physics.add.collider(player, this.cassable)
     this.physics.add.collider(player, this.collectible, collectBonus, null, this)
 
     this.anims.create({
@@ -383,7 +385,7 @@ function create() {
     keyS = this.input.keyboard.addKey('s');
     doubleJump = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
 
-    player.playerFoot = this.physics.add.sprite(100, 450, 'foot').setScale(1.5).refreshBody()
+    player.playerFoot = this.physics.add.sprite(100, 450, 'foot').setScale(4).refreshBody()
     player.setBounce(0)
     player.setCollideWorldBounds(true)
     player.playerFoot.setDepth(9)
@@ -398,14 +400,13 @@ function create() {
             this.incY = 0
             this.lifespan = 0
             this.setDepth(8)
-            this.speed = Phaser.Math.GetSpeed(600, 1)
+            this.speed = Phaser.Math.GetSpeed(1000, 1)
         },
+
         fire: function(x, y) {
             this.setTexture(player.weapon.bullet)
             this.setActive(true)
             this.setVisible(true)
-
-            //  Bullets fire from the middle of the screen to the given x/y
 
             var angle = Phaser.Math.Angle.Between(x, y, player.x - player.xcamera, player.y - player.ycamera)
             this.setRotation(angle)
@@ -413,7 +414,7 @@ function create() {
             this.incX = Math.cos(angle)
             this.incY = Math.sin(angle)
 
-            this.setPosition(player.x - (this.incX * 40), player.y - (this.incY * 40))
+            this.setPosition(player.x - (this.incX * 70), player.y - (this.incY * 70))
 
             this.lifespan = player.weapon.lifespan; //porté tir
         },
@@ -428,7 +429,9 @@ function create() {
                 this.setVisible(false);
             }
         }
+
     })
+
     bullets = this.physics.add.group({
         classType: Bullet,
         maxSize: player.weapon.maxShot, //munition max afficher a l'ecran
@@ -455,8 +458,8 @@ function create() {
         isDown = false;
 
     })
-    this.physics.world.setBounds(0, 0, 3200, 3200)
-    this.cameras.main.setBounds(0, 0, 3200, 3200)
+    this.physics.world.setBounds(0, 0, 3200 * 4, 3200 * 4)
+    this.cameras.main.setBounds(0, 0, 3200 * 4, 3200 * 4)
     this.cameras.main.startFollow(player)
     this.cameras.main.ignore([scoreText, pvText])
 
