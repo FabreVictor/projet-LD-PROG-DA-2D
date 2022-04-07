@@ -229,15 +229,16 @@ function destroyProps(player, prop) {
         currentScene.cassable.removeTileAt(prop.x, prop.y)
         return
     }
-    if (prop.properties.wallType == 'fissure' && player.weapons == 'lasercutter') {
-        console.log("WALL DESTROY")
-        prop.destroy()
-        currentScene.cassable.removeTileAt(prop.x, prop.y)
-        return
-    }
-
-
 }
+/********************************************************* */
+function shootProps(bullet, prop) {
+    console.log("WALL DESTROY")
+    prop.destroy()
+    currentScene.cassable.removeTileAt(prop.x, prop.y)
+    return
+}
+
+
 /********************************************************* */
 function create() {
     currentScene = this
@@ -286,8 +287,8 @@ function create() {
     updatePlayerWeapon(player)
 
     this.physics.add.collider(player, this.vaisseau)
-
     this.physics.add.collider(player, this.cassable, destroyProps, null, this)
+
     this.physics.add.collider(player, this.collectible, collectBonus, null, this)
 
     this.anims.create({
@@ -382,13 +383,10 @@ function create() {
     });
     stars.children.iterate(function(child) {
         child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
-    }); //chaque étoile va rebondir un peu différemment
+    });
 
     this.physics.add.collider(stars, this.vaisseau);
-    //et collisionne avec les plateformes
     this.physics.add.overlap(player, stars, collectStar, null, this);
-    //le contact perso/étoile ne génère pas de collision (overlap)
-    //mais en revanche cela déclenche une fonction collectStar
     monstres = this.physics.add.group();
     this.physics.add.collider(monstres, this.vaisseau);
     this.physics.add.collider(player, monstres, hitMonstre, null, this);
@@ -457,8 +455,10 @@ function create() {
         maxSize: player.weapon.maxShot, //munition max afficher a l'ecran
         runChildUpdate: true
     })
+
     this.physics.add.overlap(bullets, monstres, shootMonstre, null, this)
-    this.physics.add.collider(bullets, this.vaisseau, shootWall, null, this)
+    this.physics.add.overlap(bullets, this.vaisseau, shootWall, null, this)
+    this.physics.add.overlap(bullets, this.cassable, shootProps, null, this)
 
     this.input.on('pointerdown', function(pointer) {
 
@@ -499,11 +499,12 @@ function hitMonstre(player, monstre) {
 }
 
 /********************************************************* */
-function shootWall(bullet) {
-    console.log("Wall")
-    bullet.destroy()
-    bullet.lifespan = 0
-
+function shootWall(bullet, wall) {
+    if (wall.properties.estSolide) {
+        console.log("Wall", wall)
+        bullet.destroy()
+        bullet.lifespan = 0
+    }
 }
 
 /********************************************************* */
