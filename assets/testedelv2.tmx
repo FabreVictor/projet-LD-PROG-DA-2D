@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="38" height="46" tilewidth="32" tileheight="32" infinite="0" nextlayerid="9" nextobjectid="35">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="38" height="46" tilewidth="32" tileheight="32" infinite="0" nextlayerid="10" nextobjectid="36">
  <editorsettings>
   <export target="testedelv2.json" format="json"/>
  </editorsettings>
@@ -697,7 +697,7 @@
    </properties>
   </tile>
  </tileset>
- <layer id="1" name="CalquedeTuiles1" width="38" height="46" visible="0">
+ <layer id="1" name="CalquedeTuiles1" width="38" height="46">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,66,4,4,4,4,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,66,49,129,129,129,129,49,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -747,7 +747,7 @@
 0,0,0,26,7,7,7,7,7,7,7,7,7,7,7,7,7,46,0,0,26,7,7,7,7,7,7,7,7,7,7,7,7,7,46,0,0,0
 </data>
  </layer>
- <layer id="6" name="colectible" width="38" height="46" visible="0">
+ <layer id="6" name="colectible" width="38" height="46">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -797,7 +797,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <layer id="5" name="bloquecasable" width="38" height="46" visible="0">
+ <layer id="5" name="bloquecasable" width="38" height="46">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -847,7 +847,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <layer id="7" name="monstre" width="38" height="46" visible="0">
+ <layer id="7" name="monstre" width="38" height="46">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -969,4 +969,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
+ <objectgroup id="9" name="nathanMonstre">
+  <object id="35" gid="48" x="320" y="352" width="32" height="32"/>
+ </objectgroup>
 </map>

@@ -184,7 +184,6 @@ function collectBonus(player, bonus) {
     if (bonus.properties.typeBonus == "ammo") {
         bonus.destroy()
         currentScene.collectible.removeTileAt(bonus.x, bonus.y)
-            //bonus.disableBody(true, true)
         player.weapon.currentAmmo += 10
         console.log("AMMO")
         scoreText.setText(player.weaponName + 'Ammo: ' + player.weapon.currentAmmo);
@@ -504,12 +503,29 @@ function create() {
         monster.y *= 4
         monster.setDepth(20)
         monster.setScale(4)
-    }
-    //let monstreLayer = carteDuNiveau.createFromTiles(46, 45, { key: 'monstre' }, this, this.cameras.main)
+        monster.setBounce(1);
+        monster.setVelocityY(-100)
+    };
+
+    //this.enemis = this.physics.add.group({
+    //allowGravity: false,
+    //});
+
+    //carteDuNiveau.getObjectLayer('nathanMonstre').objects.forEach((enemiPlace) => {
+    //this.enemi = this.enemis.create(enemiPlace.x, enemiPlace.y, 'monstre').setOrigin(0).setScale(4).setDepth(0);
+    //console.log("Ta mere connard", this.enemis)
+    //});
+
+    let monstreLayer = carteDuNiveau.createFromTiles(46, 45, { key: 'monstre' }, this, this.cameras.main)
     console.log("TILES12", this.monsterSprites)
 
     UICam = this.cameras.add(0, 0, 3200, 600)
-    UICam.ignore([player, player.playerFoot, stars, this.vaisseau, this.collectible, this.cassable, this.monstre, this.monsterSprites])
+    UICam.ignore([player, player.playerFoot, stars, this.vaisseau, this.collectible, this.cassable, this.monstre, this.monsterSprites, this.enemi])
+
+    this.enemi.setBounce(1);
+    this.enemis.setVelocityY(-100)
+
+
 }
 
 /********************************************************* */
