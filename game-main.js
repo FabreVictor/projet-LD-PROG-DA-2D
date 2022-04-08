@@ -229,15 +229,18 @@ function destroyProps(player, prop) {
         currentScene.cassable.removeTileAt(prop.x, prop.y)
         return
     }
-    if (prop.properties.wallType == 'fissure' && player.weapons == 'lasercutter') {
+}
+/********************************************************* */
+function shootProps(bullet, prop) {
+    if (player.weaponName == "lasercutter") {
         console.log("WALL DESTROY")
         prop.destroy()
         currentScene.cassable.removeTileAt(prop.x, prop.y)
         return
     }
-
-
 }
+
+
 /********************************************************* */
 function create() {
     currentScene = this
@@ -247,18 +250,26 @@ function create() {
         "floor",
         "tiles"
     );
-    this.vaisseau = carteDuNiveau.createStaticLayer(
+    this.vaisseau = carteDuNiveau.createLayer(
         "CalquedeTuiles1",
         tileset
     );
-    this.cassable = carteDuNiveau.createStaticLayer(
+    this.cassable = carteDuNiveau.createLayer(
         "bloquecasable",
         tileset
     );
-    this.collectible = carteDuNiveau.createStaticLayer(
+    this.collectible = carteDuNiveau.createLayer(
         "colectible",
         tileset
     );
+    this.monstre = carteDuNiveau.createLayer(
+        "monstre",
+        tileset
+    );
+
+    this.monstre.setScale(4)
+    this.monstre.setDepth(10)
+    console.log(this.monstre)
     this.vaisseau.setScale(4)
     this.cassable.setScale(4)
     this.cassable.setDepth(10)
@@ -286,8 +297,8 @@ function create() {
     updatePlayerWeapon(player)
 
     this.physics.add.collider(player, this.vaisseau)
-
     this.physics.add.collider(player, this.cassable, destroyProps, null, this)
+
     this.physics.add.collider(player, this.collectible, collectBonus, null, this)
 
     this.anims.create({
@@ -382,13 +393,10 @@ function create() {
     });
     stars.children.iterate(function(child) {
         child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
-    }); //chaque étoile va rebondir un peu différemment
+    });
 
     this.physics.add.collider(stars, this.vaisseau);
-    //et collisionne avec les plateformes
     this.physics.add.overlap(player, stars, collectStar, null, this);
-    //le contact perso/étoile ne génère pas de collision (overlap)
-    //mais en revanche cela déclenche une fonction collectStar
     monstres = this.physics.add.group();
     this.physics.add.collider(monstres, this.vaisseau);
     this.physics.add.collider(player, monstres, hitMonstre, null, this);
@@ -447,18 +455,17 @@ function create() {
                 this.setVisible(false);
             }
         }
-
     })
-
-
 
     bullets = this.physics.add.group({
         classType: Bullet,
         maxSize: player.weapon.maxShot, //munition max afficher a l'ecran
         runChildUpdate: true
     })
+
     this.physics.add.overlap(bullets, monstres, shootMonstre, null, this)
-    this.physics.add.collider(bullets, this.vaisseau, shootWall, null, this)
+    this.physics.add.overlap(bullets, this.vaisseau, shootWall, null, this)
+    this.physics.add.overlap(bullets, this.cassable, shootProps, null, this)
 
     this.input.on('pointerdown', function(pointer) {
 
@@ -478,13 +485,31 @@ function create() {
         isDown = false;
 
     })
+
     this.physics.world.setBounds(0, 0, 3200 * 4, 3200 * 4)
     this.cameras.main.setBounds(0, 0, 3200 * 4, 3200 * 4)
     this.cameras.main.startFollow(player)
     this.cameras.main.ignore([scoreText, pvText])
 
+    console.log("TILES1")
+    let idList = []
+    for (let i = 0; i < 35; i++) {
+        let id = i + 15
+        idList.push({ id: id, key: "monstre" })
+    }
+    this.monsterSprites = carteDuNiveau.createFromObjects("monstersObjects", idList)
+    for (let monster of this.monsterSprites) {
+        monster.x *= 4
+        monster.y += 32
+        monster.y *= 4
+        monster.setDepth(20)
+        monster.setScale(4)
+    }
+    //let monstreLayer = carteDuNiveau.createFromTiles(46, 45, { key: 'monstre' }, this, this.cameras.main)
+    console.log("TILES12", this.monsterSprites)
+
     UICam = this.cameras.add(0, 0, 3200, 600)
-    UICam.ignore([player, player.playerFoot, stars, this.vaisseau, this.collectible, this.cassable])
+    UICam.ignore([player, player.playerFoot, stars, this.vaisseau, this.collectible, this.cassable, this.monstre, this.monsterSprites])
 }
 
 /********************************************************* */
@@ -499,15 +524,16 @@ function hitMonstre(player, monstre) {
 }
 
 /********************************************************* */
-function shootWall(bullet) {
-    console.log("Wall")
-    bullet.destroy()
-    bullet.lifespan = 0
-
+function shootWall(bullet, wall) {
+    if (wall.properties.estSolide) {
+        console.log("Wall", wall)
+        bullet.destroy()
+        bullet.lifespan = 0
+    }
 }
 
 /********************************************************* */
-function shootMonstre(bullet, monstre) {
+function shootMonstre(player, monstre) {
     console.log("ici")
     bullet.lifespan = 0
     monstre.disableBody(true, true)
@@ -531,7 +557,6 @@ function collectStar(player, star) {
         monstre.setBounce(1)
         monstre.setCollideWorldBounds(true)
         monstre.setVelocity(Phaser.Math.Between(-200, 200), 20)
-        monstre.allowGravity = false //elle n’est pas soumise à la gravité
         UICam.ignore([monstre])
     }
 }
