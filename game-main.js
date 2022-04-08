@@ -490,7 +490,7 @@ function create() {
     this.cameras.main.startFollow(player)
     this.cameras.main.ignore([scoreText, pvText])
 
-    console.log("TILES1")
+    /*console.log("TILES1")
     let idList = []
     for (let i = 0; i < 35; i++) {
         let id = i + 15
@@ -498,14 +498,8 @@ function create() {
     }
     this.monsterSprites = carteDuNiveau.createFromObjects("monstersObjects", idList)
     for (let monster of this.monsterSprites) {
-        monster.x *= 4
-        monster.y += 32
-        monster.y *= 4
-        monster.setDepth(20)
-        monster.setScale(4)
-        monster.setBounce(1);
-        monster.setVelocityY(-100)
-    };
+
+    };*/
 
     //this.enemis = this.physics.add.group({
     //allowGravity: false,
@@ -516,14 +510,14 @@ function create() {
     //console.log("Ta mere connard", this.enemis)
     //});
 
-    let monstreLayer = carteDuNiveau.createFromTiles(46, 45, { key: 'monstre' }, this, this.cameras.main)
-    console.log("TILES12", this.monsterSprites)
+    /*let monstreLayer = carteDuNiveau.createFromTiles(46, 45, { key: 'monstre' }, this, this.cameras.main)
+    console.log("TILES12", this.monsterSprites)*/
 
     UICam = this.cameras.add(0, 0, 3200, 600)
-    UICam.ignore([player, player.playerFoot, stars, this.vaisseau, this.collectible, this.cassable, this.monstre, this.monsterSprites, this.enemi])
+    UICam.ignore([player, player.playerFoot, stars, this.vaisseau, this.collectible, this.cassable, this.monstre])
 
-    this.enemi.setBounce(1);
-    this.enemis.setVelocityY(-100)
+    /*this.enemi.setBounce(1);
+    this.enemis.setVelocityY(-100)*/
 
 
 }

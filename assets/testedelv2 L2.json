@@ -45,7 +45,7 @@
          "name":"monstre",
          "opacity":1,
          "type":"tilelayer",
-         "visible":true,
+         "visible":false,
          "width":38,
          "x":0,
          "y":0
@@ -373,6 +373,17 @@
                  "width":32,
                  "x":288,
                  "y":960
+                }, 
+                {
+                 "height":0,
+                 "id":36,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":2148.48484848485,
+                 "y":469.69696969697
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -381,7 +392,7 @@
          "y":0
         }],
  "nextlayerid":8,
- "nextobjectid":36,
+ "nextobjectid":37,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.7.2",
