@@ -13,6 +13,7 @@ class GameUtility {
         this.mouseY = 0
         this.lastFired = 0
         this.currentScene = currentScene
+        this.lastJump = 0
 
         this.weaponsList = ['rifle', 'lasercutter', 'machinegun'];
         this.weaponsAvailable = ['rifle'];
@@ -101,7 +102,6 @@ class GameUtility {
         }
         /********************************************************* */
     static collectBonus(player, bonus) {
-            //GameUtility.currentScene.scene.start('sceneB')
 
             console.log('Bonus collected!!!', player, bonus);
             if (bonus == undefined || bonus.properties == undefined) return;
@@ -139,20 +139,31 @@ class GameUtility {
                 GameUtility.redKeyText.setText('red KEY');
                 return;
             }
-
-
-            //console.log("Bonus collected!!!", player, bonus)
-        }
-        /********************************************************* */
-    static destroyProps(player, prop) {
-            if (prop.properties.wallType == 'laser' && player.redKey == true) {
-                console.log('LASER OPEN')
-                prop.destroy()
-                GameUtility.currentScene.cassable.removeTileAt(prop.x, prop.y)
-                return;
+            if (bonus.properties.typeBonus == 'teleport') {
+                console.log("TP")
+                if (Date.now() - GameUtility.lastJump > 1000) {
+                    GameUtility.lastJump = Date.now()
+                    if (GameUtility.currentScene.name == "sceneA") {
+                        GameUtility.currentScene.scene.sleep()
+                        GameUtility.currentScene.scene.switch('sceneB')
+                    } else {
+                        GameUtility.currentScene.scene.sleep()
+                        GameUtility.currentScene.scene.switch('sceneA')
+                    }
+                }
             }
         }
         /********************************************************* */
+    static destroyProps(player, prop) {
+        if (prop.properties.wallType == 'laser' && player.redKey == true) {
+            console.log('LASER OPEN')
+            prop.destroy()
+            GameUtility.currentScene.cassable.removeTileAt(prop.x, prop.y)
+            return;
+        }
+    }
+
+    /********************************************************* */
     static shootProps(bullet, prop) {
         if (GameUtility.player.weaponName == 'lasercutter') {
             console.log('WALL DESTROY')
@@ -165,7 +176,6 @@ class GameUtility {
     /********************************************************* */
     static commonCreate(currentScene) {
         this.currentScene = currentScene
-
         currentScene.anims.create({
             key: 'monstreMove',
             frames: currentScene.anims.generateFrameNumbers('monstre', {
@@ -239,9 +249,9 @@ class GameUtility {
         currentScene.physics.add.collider(this.player.playerFoot, currentScene.vaisseau)
 
         let player = this.player
-        currentScene.physics.add.collider(player, currentScene.vaisseau);
-        currentScene.physics.add.collider(player, currentScene.cassable, this.destroyProps, null, currentScene);
-        currentScene.physics.add.collider(player, currentScene.collectible, this.collectBonus, null, currentScene);
+        currentScene.physics.add.collider(player, currentScene.vaisseau)
+        currentScene.physics.add.collider(player, currentScene.cassable, this.destroyProps, null, currentScene)
+        currentScene.physics.add.collider(player, currentScene.collectible, this.collectBonus, null, currentScene)
 
         //affiche un texte à l’écran, pour le score
         // Text ammo
@@ -385,7 +395,6 @@ class GameUtility {
         currentScene.physics.add.overlap(this.bullets, this.monsterSprites, this.shootMonstre, null, currentScene)
         currentScene.physics.add.collider(this.monsterSprites, currentScene.vaisseau)
         currentScene.physics.add.collider(this.monsterSprites, currentScene.cassable)
-
     }
 
     /********************************************************* */
@@ -516,6 +525,7 @@ var SceneA = new Phaser.Class({
     Extends: Phaser.Scene,
 
     initialize: function SceneA() {
+        this.name = "sceneA"
         Phaser.Scene.call(this, { key: 'sceneA' });
     },
 
@@ -569,6 +579,7 @@ var SceneB = new Phaser.Class({
     Extends: Phaser.Scene,
 
     initialize: function SceneB() {
+        this.name = "sceneB"
         Phaser.Scene.call(this, { key: 'sceneB' });
     },
 
