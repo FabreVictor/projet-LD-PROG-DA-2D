@@ -23,8 +23,9 @@ var config = {
 
 
 /********************************************************* */
-const MONSTER_MAX_SPEED = 60
-new Phaser.Game(config);
+const MONSTER_MAX_SPEED = 200
+const MONSTER_MIN_SPEED = 50
+new Phaser.Game(config)
 
 /********************************************************* */
 function preload() {
@@ -150,7 +151,7 @@ cadenceShoot = 0
 function checkDash(player, direction, velocity) {
     if ((Phaser.Input.Keyboard.JustDown(spacebar))) {
         //console.log("DASH ON")
-        player.setVelocityX(velocity);
+        player.setVelocityX(velocity)
         player.dash = true;
         player.dashCounter = 0;
     }
@@ -291,6 +292,7 @@ function create() {
     player.setCollideWorldBounds(true)
     player.setDepth(10)
     player.pv = 1
+    player.last_pv_lost_date = Date.now()
     player.redKey = false
     player.weaponIndex = 0
     player.weaponList = Object.assign({}, weaponsDef)
@@ -493,7 +495,7 @@ function create() {
     this.cameras.main.startFollow(player)
     this.cameras.main.ignore([scoreText, pvText])
 
-    /*console.log("TILES1")
+    console.log("TILES1")
     let idList = []
     for (let i = 0; i < 35; i++) {
         let id = i + 15
@@ -502,7 +504,6 @@ function create() {
     this.monsterSprites = carteDuNiveau.createFromObjects("monstersObjects", idList)
     this.physics.world.enable(this.monsterSprites)
     for (let monster of this.monsterSprites) {
-<<<<<<< HEAD
         this.physics.world.enable(monster)
         Object.assign(
             monster,
@@ -518,7 +519,11 @@ function create() {
         monster.setScale(4)
         monster.setBounce(1)
         monster.setCollideWorldBounds(true)
-        monster.setVelocity((Math.random() - 0.5) * MONSTER_MAX_SPEED, (Math.random() - 0.5) * MONSTER_MAX_SPEED)
+        let speedX = (Math.random() - 0.5) * MONSTER_MAX_SPEED
+        speedX = (speedX < MONSTER_MIN_SPEED) ? MONSTER_MIN_SPEED : speedX
+        let speedY = (Math.random() - 0.5) * MONSTER_MAX_SPEED
+        speedY = (speedX < MONSTER_MIN_SPEED) ? MONSTER_MIN_SPEED : speedX
+        monster.setVelocity(speedX, speedY)
     }
     this.anims.play('monstreMove', this.monsterSprites)
 
@@ -530,9 +535,6 @@ function create() {
     this.physics.add.collider(player, this.monsterSprites, hitMonstre, null, this)
     this.physics.add.overlap(bullets, this.monsterSprites, shootMonstre, null, this)
     this.physics.add.collider(this.monsterSprites, this.vaisseau)
-=======
-
-    };*/
 
     //this.enemis = this.physics.add.group({
     //allowGravity: false,
@@ -551,22 +553,22 @@ function create() {
 
     /*this.enemi.setBounce(1);
     this.enemis.setVelocityY(-100)*/
-
->>>>>>> c73629f94297e3a065f779a7d7571d07e61f087b
-
 }
 
 /********************************************************* */
 function hitMonstre(player, ) {
-    player.life -= 1
-    if (player.life == 0) {
-        this.physics.pause();
-        player.setTint(0xff0000)
-        gameOver = true;
-        this.scene.restart()
+    let now = Date.now()
+    if (now - player.last_pv_lost_date > 2000) {
+        player.pv -= 1
+        pvText.setText('PV : ' + player.pv + '/3')
+        if (player.pv <= 0) {
+            this.physics.pause();
+            player.setTint(0xff0000)
+            gameOver = true;
+            this.scene.restart()
+        }
+        player.last_pv_lost_date = now
     }
-
-
 }
 
 /********************************************************* */
@@ -579,11 +581,12 @@ function shootWall(bullet, wall) {
 }
 
 /********************************************************* */
-function shootMonstre(bullet, monstre) {
-    console.log("ici")
+function shootMonstre(monstre, bullet) {
+    console.log("monstre toucher", monstre)
     bullet.lifespan = 0
+    bullet.destroy()
+    let newTile = new Tile(this.collectible, monstre.x, monstre.y, monstre.width, monstre.height, 32, 32)
     monstre.destroy()
-    return
 }
 
 /********************************************************* */
