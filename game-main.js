@@ -185,7 +185,6 @@ function collectBonus(player, bonus) {
     if (bonus.properties.typeBonus == "ammo") {
         bonus.destroy()
         currentScene.collectible.removeTileAt(bonus.x, bonus.y)
-            //bonus.disableBody(true, true)
         player.weapon.currentAmmo += 10
         console.log("AMMO")
         scoreText.setText(player.weaponName + 'Ammo: ' + player.weapon.currentAmmo);
@@ -494,7 +493,7 @@ function create() {
     this.cameras.main.startFollow(player)
     this.cameras.main.ignore([scoreText, pvText])
 
-    console.log("TILES1")
+    /*console.log("TILES1")
     let idList = []
     for (let i = 0; i < 35; i++) {
         let id = i + 15
@@ -503,6 +502,7 @@ function create() {
     this.monsterSprites = carteDuNiveau.createFromObjects("monstersObjects", idList)
     this.physics.world.enable(this.monsterSprites)
     for (let monster of this.monsterSprites) {
+<<<<<<< HEAD
         this.physics.world.enable(monster)
         Object.assign(
             monster,
@@ -530,6 +530,29 @@ function create() {
     this.physics.add.collider(player, this.monsterSprites, hitMonstre, null, this)
     this.physics.add.overlap(bullets, this.monsterSprites, shootMonstre, null, this)
     this.physics.add.collider(this.monsterSprites, this.vaisseau)
+=======
+
+    };*/
+
+    //this.enemis = this.physics.add.group({
+    //allowGravity: false,
+    //});
+
+    //carteDuNiveau.getObjectLayer('nathanMonstre').objects.forEach((enemiPlace) => {
+    //this.enemi = this.enemis.create(enemiPlace.x, enemiPlace.y, 'monstre').setOrigin(0).setScale(4).setDepth(0);
+    //console.log("Ta mere connard", this.enemis)
+    //});
+
+    /*let monstreLayer = carteDuNiveau.createFromTiles(46, 45, { key: 'monstre' }, this, this.cameras.main)
+    console.log("TILES12", this.monsterSprites)*/
+
+    UICam = this.cameras.add(0, 0, 3200, 600)
+    UICam.ignore([player, player.playerFoot, stars, this.vaisseau, this.collectible, this.cassable, this.monstre])
+
+    /*this.enemi.setBounce(1);
+    this.enemis.setVelocityY(-100)*/
+
+>>>>>>> c73629f94297e3a065f779a7d7571d07e61f087b
 
 }
 
