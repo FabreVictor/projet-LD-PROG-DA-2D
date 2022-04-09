@@ -31,6 +31,7 @@ new Phaser.Game(config)
 function preload() {
 
     this.load.tilemapTiledJSON("carte", "assets/testedelv2.json");
+    this.load.tilemapTiledJSON("carteLV2", "assets/testedelv2L2.json");
     this.load.image("tiles", "assets/floor.png")
 
     this.load.image('sky', 'assets/sky.png')
@@ -137,7 +138,6 @@ var mouseX = 0;
 var mouseY = 0;
 var UICam
 var currentScene
-
 var playerSpeed
 playerSpeed = 500
 var maxShoot
@@ -146,32 +146,6 @@ var lifeShoot
 lifeShoot = 75
 var cadenceShoot
 cadenceShoot = 0
-
-/********************************************************* */
-function checkDash(player, direction, velocity) {
-    if ((Phaser.Input.Keyboard.JustDown(spacebar))) {
-        //console.log("DASH ON")
-        player.setVelocityX(velocity)
-        player.dash = true;
-        player.dashCounter = 0;
-    }
-}
-
-/********************************************************* */
-function checkJump(player) {
-    if (player.jumpCount == undefined) {
-        player.jumpCount = 0;
-    }
-
-    if (player.jumpCount <= 0 && Phaser.Input.Keyboard.JustDown(doubleJump)) {
-        player.setVelocityY(-330); //alors vitesse verticale négative
-        player.jumpCount += 1;
-    }
-
-    if (player.jumpCount > 0 && player.body.touching.down) {
-        player.jumpCount = 0;
-    }
-}
 
 /********************************************************* */
 function updatePlayerWeapon(player) {
@@ -185,7 +159,7 @@ function collectBonus(player, bonus) {
     if (bonus == undefined || bonus.properties == undefined) return
     if (bonus.properties.typeBonus == "ammo") {
         bonus.destroy()
-        currentScene.collectible.removeTileAt(bonus.x, bonus.y)
+        SceneManager.collectible.removeTileAt(bonus.x, bonus.y)
         player.weapon.currentAmmo += 10
         console.log("AMMO")
         scoreText.setText(player.weaponName + 'Ammo: ' + player.weapon.currentAmmo);
@@ -193,7 +167,7 @@ function collectBonus(player, bonus) {
     }
     if (bonus.properties.typeBonus == "gun") {
         bonus.destroy()
-        currentScene.collectible.removeTileAt(bonus.x, bonus.y)
+        SceneManager.collectible.removeTileAt(bonus.x, bonus.y)
         if (weaponsAvailable.length == 2) {
             weaponsAvailable.push("machinegun")
         }
@@ -204,7 +178,7 @@ function collectBonus(player, bonus) {
     }
     if (bonus.properties.typeBonus == "pv") {
         bonus.destroy()
-        currentScene.collectible.removeTileAt(bonus.x, bonus.y)
+        SceneManager.collectible.removeTileAt(bonus.x, bonus.y)
         player.pv += 1
         if (player.pv > 3)
             player.pv = 3
@@ -214,7 +188,7 @@ function collectBonus(player, bonus) {
     }
     if (bonus.properties.typeBonus == "redkey") {
         bonus.destroy()
-        currentScene.collectible.removeTileAt(bonus.x, bonus.y)
+        SceneManager.collectible.removeTileAt(bonus.x, bonus.y)
         player.redKey = true
         redKeyText.setText('red KEY')
         return
@@ -227,7 +201,7 @@ function destroyProps(player, prop) {
     if (prop.properties.wallType == 'laser' && player.redKey == true) {
         console.log("LASER OPEN")
         prop.destroy()
-        currentScene.cassable.removeTileAt(prop.x, prop.y)
+        SceneManager.cassable.removeTileAt(prop.x, prop.y)
         return
     }
 }
@@ -236,50 +210,113 @@ function shootProps(bullet, prop) {
     if (player.weaponName == "lasercutter") {
         console.log("WALL DESTROY")
         prop.destroy()
-        currentScene.cassable.removeTileAt(prop.x, prop.y)
+        SceneManager.cassable.removeTileAt(prop.x, prop.y)
         return
     }
 }
 
+/********************************************************* */
+class SceneManager {
+
+    static init(scene) {
+        this.carteDuNiveau = scene.add.tilemap("carteLV2");
+        this.tileset = this.carteDuNiveau.addTilesetImage(
+            "floor",
+            "tiles"
+        )
+        this.vaisseau = this.carteDuNiveau.createLayer(
+            "CalquedeTuiles1",
+            this.tileset
+        )
+        this.cassable = this.carteDuNiveau.createLayer(
+            "bloquecasable",
+            this.tileset
+        )
+        this.collectible = this.carteDuNiveau.createLayer(
+            "colectible",
+            this.tileset
+        )
+        this.monstre = this.carteDuNiveau.createLayer(
+            "monstre",
+            this.tileset
+        )
+        this.monstre.setScale(4)
+        this.monstre.setDepth(10)
+        console.log(this.monstre)
+        this.vaisseau.setScale(4)
+        this.cassable.setScale(4)
+        this.cassable.setDepth(10)
+        this.collectible.setScale(4)
+        this.collectible.setDepth(20)
+        this.vaisseau.setCollisionByProperty({ estSolide: true }, true)
+        this.cassable.setCollisionByProperty({ estSolide: true }, true)
+        this.collectible.setCollisionByProperty({ estCollectible: true }, true)
+        this.vaisseau.setDepth(8)
+
+        this.monsterIdList = []
+        for (let i = 0; i < 72; i++) {
+            let id = i + 48
+            this.monsterIdList.push({ id: id, key: "monstre" })
+        }
+
+        this.idAmmo = 114
+        this.idPv = 134
+    }
+
+    static initScene1(scene) {
+        this.carteDuNiveau = scene.add.tilemap("carte");
+
+        this.tileset = this.carteDuNiveau.addTilesetImage(
+            "floor",
+            "tiles"
+        )
+        this.vaisseau = this.carteDuNiveau.createLayer(
+            "CalquedeTuiles1",
+            this.tileset
+        )
+        this.cassable = this.carteDuNiveau.createLayer(
+            "bloquecasable",
+            this.tileset
+        )
+        this.collectible = this.carteDuNiveau.createLayer(
+            "colectible",
+            this.tileset
+        )
+        this.monstre = this.carteDuNiveau.createLayer(
+            "monstre",
+            this.tileset
+        )
+
+        this.monstre.setScale(4)
+        this.monstre.setDepth(10)
+        console.log(this.monstre)
+        this.vaisseau.setScale(4)
+        this.cassable.setScale(4)
+        this.cassable.setDepth(10)
+        this.collectible.setScale(4)
+        this.collectible.setDepth(10)
+        this.vaisseau.setCollisionByProperty({ estSolide: true }, true)
+        this.cassable.setCollisionByProperty({ estSolide: true }, true)
+        this.collectible.setCollisionByProperty({ estCollectible: true }, true)
+        this.vaisseau.setDepth(8)
+
+        this.monsterIdList = []
+        for (let i = 0; i < 35; i++) {
+            let id = i + 15
+            this.monsterIdList.push({ id: id, key: "monstre" })
+        }
+
+        this.idAmmo = 115
+        this.idPv = 135
+
+    }
+}
 
 /********************************************************* */
 function create() {
+
     currentScene = this
-    const carteDuNiveau = this.add.tilemap("carte");
-
-    const tileset = carteDuNiveau.addTilesetImage(
-        "floor",
-        "tiles"
-    );
-    this.vaisseau = carteDuNiveau.createLayer(
-        "CalquedeTuiles1",
-        tileset
-    );
-    this.cassable = carteDuNiveau.createLayer(
-        "bloquecasable",
-        tileset
-    );
-    this.collectible = carteDuNiveau.createLayer(
-        "colectible",
-        tileset
-    );
-    this.monstre = carteDuNiveau.createLayer(
-        "monstre",
-        tileset
-    );
-
-    this.monstre.setScale(4)
-    this.monstre.setDepth(10)
-    console.log(this.monstre)
-    this.vaisseau.setScale(4)
-    this.cassable.setScale(4)
-    this.cassable.setDepth(10)
-    this.collectible.setScale(4)
-    this.collectible.setDepth(10)
-    this.vaisseau.setCollisionByProperty({ estSolide: true }, true)
-    this.cassable.setCollisionByProperty({ estSolide: true }, true)
-    this.collectible.setCollisionByProperty({ estCollectible: true }, true)
-    this.vaisseau.setDepth(8)
+    SceneManager.init(currentScene)
         /*const debugGraphics = this.add.graphics().setAlpha(0.75)
             this.vaisseau.renderDebug(debugGraphics, {
                     tileColor: null, // Color of non-colliding tiles
@@ -287,7 +324,7 @@ function create() {
                     faceColor: new Phaser.Display.Color(40, 39, 37, 255) // Color of colliding face edges
                 })*/
         // Player definition
-    player = this.physics.add.sprite(500 * 2, 450 * 3, 'perso').setScale(4).refreshBody();
+    player = this.physics.add.sprite(19 * 32 * 4, 25 * 32 * 4, 'perso').setScale(4).refreshBody();
     player.setBounce(0)
     player.setCollideWorldBounds(true)
     player.setDepth(10)
@@ -298,10 +335,10 @@ function create() {
     player.weaponList = Object.assign({}, weaponsDef)
     updatePlayerWeapon(player)
 
-    this.physics.add.collider(player, this.vaisseau)
-    this.physics.add.collider(player, this.cassable, destroyProps, null, this)
+    this.physics.add.collider(player, SceneManager.vaisseau)
+    this.physics.add.collider(player, SceneManager.cassable, destroyProps, null, this)
 
-    this.physics.add.collider(player, this.collectible, collectBonus, null, this)
+    this.physics.add.collider(player, SceneManager.collectible, collectBonus, null, this)
 
     this.anims.create({
         key: 'monstreMove',
@@ -383,29 +420,6 @@ function create() {
     pvText.setColor('green')
     pvText.setScrollFactor(1)
 
-    stars = this.physics.add.group({
-        key: 'star',
-        repeat: 11,
-        setXY: {
-            x: 12,
-            y: 0,
-            stepX: 70
-        }
-
-    });
-    stars.children.iterate(function(child) {
-        child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
-    });
-
-    this.physics.add.collider(stars, this.vaisseau);
-    //this.physics.add.overlap(player, stars, collectStar, null, this);
-
-    //monstres = this.physics.add.group();
-
-    //this.physics.add.collider(monstres, this.vaisseau);
-    //this.physics.add.collider(player, monstres, hitMonstre, null, this);
-
-
     this.input.keyboard.enabled = true
     spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     keyT = this.input.keyboard.addKey('t');
@@ -467,9 +481,8 @@ function create() {
         runChildUpdate: true
     })
 
-    this.physics.add.overlap(bullets, monstres, shootMonstre, null, this)
-    this.physics.add.overlap(bullets, this.vaisseau, shootWall, null, this)
-    this.physics.add.overlap(bullets, this.cassable, shootProps, null, this)
+    this.physics.add.overlap(bullets, SceneManager.vaisseau, shootWall, null, this)
+    this.physics.add.overlap(bullets, SceneManager.cassable, shootProps, null, this)
 
     this.input.on('pointerdown', function(pointer) {
 
@@ -495,13 +508,8 @@ function create() {
     this.cameras.main.startFollow(player)
     this.cameras.main.ignore([scoreText, pvText])
 
-    console.log("TILES1")
-    let idList = []
-    for (let i = 0; i < 35; i++) {
-        let id = i + 15
-        idList.push({ id: id, key: "monstre" })
-    }
-    this.monsterSprites = carteDuNiveau.createFromObjects("monstersObjects", idList)
+
+    this.monsterSprites = SceneManager.carteDuNiveau.createFromObjects("monstersObjects", SceneManager.monsterIdList)
     this.physics.world.enable(this.monsterSprites)
     for (let monster of this.monsterSprites) {
         this.physics.world.enable(monster)
@@ -527,32 +535,15 @@ function create() {
     }
     this.anims.play('monstreMove', this.monsterSprites)
 
-    //let monstreLayer = carteDuNiveau.createFromTiles(46, 45, { key: 'monstre' }, this, this.cameras.main)
-    console.log("TILES12", this.monsterSprites)
-
     UICam = this.cameras.add(0, 0, 3200, 600)
-    UICam.ignore([player, player.playerFoot, stars, this.vaisseau, this.collectible, this.cassable, this.monstre, this.monsterSprites])
+    UICam.ignore([player, player.playerFoot, SceneManager.vaisseau, SceneManager.collectible, SceneManager.cassable, SceneManager.monstre, this.monsterSprites])
     this.physics.add.collider(player, this.monsterSprites, hitMonstre, null, this)
     this.physics.add.overlap(bullets, this.monsterSprites, shootMonstre, null, this)
-    this.physics.add.collider(this.monsterSprites, this.vaisseau)
-
-    //this.enemis = this.physics.add.group({
-    //allowGravity: false,
-    //});
-
-    //carteDuNiveau.getObjectLayer('nathanMonstre').objects.forEach((enemiPlace) => {
-    //this.enemi = this.enemis.create(enemiPlace.x, enemiPlace.y, 'monstre').setOrigin(0).setScale(4).setDepth(0);
-    //console.log("Ta mere connard", this.enemis)
-    //});
-
-    /*let monstreLayer = carteDuNiveau.createFromTiles(46, 45, { key: 'monstre' }, this, this.cameras.main)
-    console.log("TILES12", this.monsterSprites)*/
+    this.physics.add.collider(this.monsterSprites, SceneManager.vaisseau)
+    this.physics.add.collider(this.monsterSprites, SceneManager.cassable)
 
     UICam = this.cameras.add(0, 0, 3200, 600)
-    UICam.ignore([player, player.playerFoot, stars, this.vaisseau, this.collectible, this.cassable, this.monstre])
-
-    /*this.enemi.setBounce(1);
-    this.enemis.setVelocityY(-100)*/
+    UICam.ignore([player, player.playerFoot, SceneManager.vaisseau, SceneManager.collectible, SceneManager.cassable, SceneManager.monstre])
 }
 
 /********************************************************* */
@@ -585,30 +576,20 @@ function shootMonstre(monstre, bullet) {
     console.log("monstre toucher", monstre)
     bullet.lifespan = 0
     bullet.destroy()
-    let newTile = new Tile(this.collectible, monstre.x, monstre.y, monstre.width, monstre.height, 32, 32)
-    monstre.destroy()
-}
 
-/********************************************************* */
-function collectStar(player, star) {
-    star.disableBody(true, true); // l’étoile disparaît
-    rifleAmmo += 10; //augmente le score de 10
-    scoreText.setText(player.weaponName + 'Ammo: ' + player.weapon.currentAmmo); //met à jour l’affichage du score 
-    if (stars.countActive(true) === 0) { // si toutes les étoiles sont prises
-        stars.children.iterate(function(child) {
-            child.enableBody(true, child.x, 0, true, true);
-        }); // on les affiche toutes de nouveau
-        var x = (player.x < 400) ? Phaser.Math.Between(400, 800) :
-            Phaser.Math.Between(400, 400);
-        // si le perso est à gauche de l’écran, on met une bombe à droite
-        // si non, on la met à gauche de l’écran
-        var monstre = monstres.create(x, 16, 'bomb')
-        monstre.anims.play('monstreMove', true)
-        monstre.setBounce(1)
-        monstre.setCollideWorldBounds(true)
-        monstre.setVelocity(Phaser.Math.Between(-200, 200), 20)
-        UICam.ignore([monstre])
+    let v = Math.random()
+    if (v == 0.5) {
+        let tile = SceneManager.carteDuNiveau.putTileAt(SceneManager.idAmmo, Math.floor(monstre.x / 32 / 4), Math.floor(monstre.y / 32 / 4), true, SceneManager.collectible)
+        tile.properties.estCollectible = true
+        tile.properties.typeBonus = "ammo"
+    } else {
+        let tile = SceneManager.carteDuNiveau.putTileAt(SceneManager.idPv, Math.floor(monstre.x / 32 / 4), Math.floor(monstre.y / 32 / 4), true, SceneManager.collectible)
+        tile.properties.estCollectible = true
+        tile.properties.typeBonus = "pv"
     }
+    SceneManager.collectible.setCollisionByProperty({ estCollectible: true }, true)
+
+    monstre.destroy()
 }
 
 /********************************************************* */
