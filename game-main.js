@@ -23,6 +23,7 @@ var config = {
 
 
 /********************************************************* */
+const MONSTER_MAX_SPEED = 60
 new Phaser.Game(config);
 
 /********************************************************* */
@@ -396,10 +397,12 @@ function create() {
     });
 
     this.physics.add.collider(stars, this.vaisseau);
-    this.physics.add.overlap(player, stars, collectStar, null, this);
-    monstres = this.physics.add.group();
-    this.physics.add.collider(monstres, this.vaisseau);
-    this.physics.add.collider(player, monstres, hitMonstre, null, this);
+    //this.physics.add.overlap(player, stars, collectStar, null, this);
+
+    //monstres = this.physics.add.group();
+
+    //this.physics.add.collider(monstres, this.vaisseau);
+    //this.physics.add.collider(player, monstres, hitMonstre, null, this);
 
 
     this.input.keyboard.enabled = true
@@ -498,28 +501,48 @@ function create() {
         idList.push({ id: id, key: "monstre" })
     }
     this.monsterSprites = carteDuNiveau.createFromObjects("monstersObjects", idList)
+    this.physics.world.enable(this.monsterSprites)
     for (let monster of this.monsterSprites) {
+        this.physics.world.enable(monster)
+        Object.assign(
+            monster,
+            Phaser.Physics.Arcade.Components.Enable,
+            Phaser.Physics.Arcade.Components.Velocity,
+            Phaser.Physics.Arcade.Components.Bounce,
+            Phaser.Physics.Arcade.Components.CollideWorldBounds
+        )
         monster.x *= 4
         monster.y += 32
         monster.y *= 4
         monster.setDepth(20)
         monster.setScale(4)
+        monster.setBounce(1)
+        monster.setCollideWorldBounds(true)
+        monster.setVelocity((Math.random() - 0.5) * MONSTER_MAX_SPEED, (Math.random() - 0.5) * MONSTER_MAX_SPEED)
     }
+    this.anims.play('monstreMove', this.monsterSprites)
+
     //let monstreLayer = carteDuNiveau.createFromTiles(46, 45, { key: 'monstre' }, this, this.cameras.main)
     console.log("TILES12", this.monsterSprites)
 
     UICam = this.cameras.add(0, 0, 3200, 600)
     UICam.ignore([player, player.playerFoot, stars, this.vaisseau, this.collectible, this.cassable, this.monstre, this.monsterSprites])
+    this.physics.add.collider(player, this.monsterSprites, hitMonstre, null, this)
+    this.physics.add.overlap(bullets, this.monsterSprites, shootMonstre, null, this)
+    this.physics.add.collider(this.monsterSprites, this.vaisseau)
+
 }
 
 /********************************************************* */
-function hitMonstre(player, monstre) {
-    this.physics.pause();
-    player.setTint(0xff0000)
-    gameOver = true;
-    this.scene.restart()
-    rifleAmmo = 15
-    scoreText.setText(player.weaponName + 'Ammo: ' + player.weapon.baseAmmo)
+function hitMonstre(player, ) {
+    player.life -= 1
+    if (player.life == 0) {
+        this.physics.pause();
+        player.setTint(0xff0000)
+        gameOver = true;
+        this.scene.restart()
+    }
+
 
 }
 
@@ -533,10 +556,11 @@ function shootWall(bullet, wall) {
 }
 
 /********************************************************* */
-function shootMonstre(player, monstre) {
+function shootMonstre(bullet, monstre) {
     console.log("ici")
     bullet.lifespan = 0
-    monstre.disableBody(true, true)
+    monstre.destroy()
+    return
 }
 
 /********************************************************* */
