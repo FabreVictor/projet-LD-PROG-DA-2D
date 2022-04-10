@@ -14,6 +14,12 @@ class GameUtility {
         this.lastFired = 0
         this.currentScene = currentScene
         this.lastJump = 0
+        this.playerSaves = []
+        this.UICamSaves = []
+        this.bulletsSave = []
+        this.pv = 1
+        this.last_pv_lost_date = Date.now()
+        this.redKey = false
 
         this.weaponsList = ['rifle', 'lasercutter', 'machinegun'];
         this.weaponsAvailable = ['rifle'];
@@ -51,7 +57,36 @@ class GameUtility {
                 damage: 2,
                 maxShot: 5000,
             },
-        };
+        }
+        this.weaponIndex = 0
+        this.weaponList = Object.assign({}, this.weaponsDef)
+        this.updatePlayerWeapon()
+
+    }
+
+    /********************************************************* */
+    static saveSceneData() {
+        this.playerSaves[this.sceneName] = this.player
+        this.UICamSaves[this.sceneName] = this.UICam
+        this.bulletsSave[this.sceneName] = this.bullets
+    }
+
+    /********************************************************* */
+    static setCurrentScene(currentScene, sceneName) {
+        if (this.sceneName != sceneName) {
+            this.sceneName = sceneName
+            if (this.playerSaves[sceneName]) {
+                this.player = this.playerSaves[sceneName]
+                this.UICam = this.UICamSaves[sceneName]
+                this.bullets = this.bulletsSave[this.sceneName]
+            }
+            this.refreshPlayer(currentScene)
+            this.prepareKeys(currentScene)
+            this.currentScene = currentScene
+            this.currentScene.scoreText.setText(this.weaponName + 'Ammo: ' + this.weapon.currentAmmo)
+            console.log("PV", this.pv)
+            this.currentScene.pvText.setText('PV : ' + this.pv + '/3')
+        }
     }
 
     /********************************************************* */
@@ -96,66 +131,68 @@ class GameUtility {
 
     /********************************************************* */
     static updatePlayerWeapon() {
-            let player = this.player
-            player.weaponName = this.weaponsList[player.weaponIndex]
-            player.weapon = this.player.weaponList[player.weaponName]
-        }
-        /********************************************************* */
+        this.weaponName = this.weaponsList[this.weaponIndex]
+        this.weapon = this.weaponList[this.weaponName]
+    }
+
+    /********************************************************* */
     static collectBonus(player, bonus) {
 
-            console.log('Bonus collected!!!', player, bonus);
-            if (bonus == undefined || bonus.properties == undefined) return;
-            if (bonus.properties.typeBonus == 'ammo') {
-                bonus.destroy();
-                GameUtility.currentScene.collectible.removeTileAt(bonus.x, bonus.y);
-                player.weapon.currentAmmo += 10;
-                console.log('AMMO');
-                GameUtility.scoreText.setText(player.weaponName + 'Ammo: ' + player.weapon.currentAmmo);
-                return;
+        if (bonus == undefined || bonus.properties == undefined) return;
+        if (bonus.properties.typeBonus == 'ammo') {
+            bonus.destroy();
+            GameUtility.currentScene.collectible.removeTileAt(bonus.x, bonus.y);
+            GameUtility.weapon.currentAmmo += 10;
+            console.log('AMMO');
+            GameUtility.currentScene.scoreText.setText(GameUtility.weaponName + 'Ammo: ' + GameUtility.weapon.currentAmmo);
+            return;
+        }
+        if (bonus.properties.typeBonus == 'gun') {
+            bonus.destroy();
+            GameUtility.currentScene.collectible.removeTileAt(bonus.x, bonus.y);
+            if (GameUtility.weaponsAvailable.length == 2) {
+                GameUtility.weaponsAvailable.push('machinegun');
             }
-            if (bonus.properties.typeBonus == 'gun') {
-                bonus.destroy();
-                GameUtility.currentScene.collectible.removeTileAt(bonus.x, bonus.y);
-                if (GameUtility.weaponsAvailable.length == 2) {
-                    GameUtility.weaponsAvailable.push('machinegun');
-                }
-                if (GameUtility.weaponsAvailable.length == 1) {
-                    GameUtility.weaponsAvailable.push('lasercutter');
-                }
-                return;
+            if (GameUtility.weaponsAvailable.length == 1) {
+                GameUtility.weaponsAvailable.push('lasercutter');
             }
-            if (bonus.properties.typeBonus == 'pv') {
-                bonus.destroy();
-                GameUtility.currentScene.collectible.removeTileAt(bonus.x, bonus.y);
-                player.pv += 1;
-                if (player.pv > 3) player.pv = 3;
-                GameUtility.pvText.setText('PV : ' + player.pv + '/3');
-                return;
-            }
-            if (bonus.properties.typeBonus == 'redkey') {
-                bonus.destroy();
-                GameUtility.currentScene.collectible.removeTileAt(bonus.x, bonus.y);
-                player.redKey = true;
-                GameUtility.redKeyText.setText('red KEY');
-                return;
-            }
-            if (bonus.properties.typeBonus == 'teleport') {
-                console.log("TP")
-                if (Date.now() - GameUtility.lastJump > 1000) {
-                    GameUtility.lastJump = Date.now()
-                    if (GameUtility.currentScene.name == "sceneA") {
-                        GameUtility.currentScene.scene.sleep()
-                        GameUtility.currentScene.scene.switch('sceneB')
-                    } else {
-                        GameUtility.currentScene.scene.sleep()
-                        GameUtility.currentScene.scene.switch('sceneA')
-                    }
+            return;
+        }
+        if (bonus.properties.typeBonus == 'pv') {
+            bonus.destroy();
+            GameUtility.currentScene.collectible.removeTileAt(bonus.x, bonus.y);
+            GameUtility.pv += 1;
+            if (GameUtility.pv > 3) GameUtility.pv = 3;
+            GameUtility.currentScene.pvText.setText('PV : ' + GameUtility.pv + '/3');
+            return;
+        }
+        if (bonus.properties.typeBonus == 'redkey') {
+            bonus.destroy();
+            GameUtility.currentScene.collectible.removeTileAt(bonus.x, bonus.y);
+            GameUtility.redKey = true;
+            GameUtility.currentScene.redKeyText.setText('red KEY');
+            return;
+        }
+        if (bonus.properties.typeBonus == 'teleport') {
+            console.log("TP")
+            if (Date.now() - GameUtility.lastJump > 1000) {
+                GameUtility.lastJump = Date.now()
+                if (GameUtility.currentScene.name == "sceneA") {
+                    GameUtility.saveSceneData()
+                    GameUtility.currentScene.scene.sleep()
+                    GameUtility.currentScene.scene.switch('sceneB')
+                } else {
+                    GameUtility.saveSceneData()
+                    GameUtility.currentScene.scene.sleep()
+                    GameUtility.currentScene.scene.switch('sceneA')
                 }
             }
         }
-        /********************************************************* */
+    }
+
+    /********************************************************* */
     static destroyProps(player, prop) {
-        if (prop.properties.wallType == 'laser' && player.redKey == true) {
+        if (prop.properties.wallType == 'laser' && this.redKey == true) {
             console.log('LASER OPEN')
             prop.destroy()
             GameUtility.currentScene.cassable.removeTileAt(prop.x, prop.y)
@@ -165,7 +202,7 @@ class GameUtility {
 
     /********************************************************* */
     static shootProps(bullet, prop) {
-        if (GameUtility.player.weaponName == 'lasercutter') {
+        if (GameUtility.weaponName == 'lasercutter') {
             console.log('WALL DESTROY')
             prop.destroy()
             GameUtility.currentScene.cassable.removeTileAt(prop.x, prop.y)
@@ -174,8 +211,29 @@ class GameUtility {
     }
 
     /********************************************************* */
+    static refreshPlayer(currentScene) {
+        this.player.setBounce(0)
+        this.player.setCollideWorldBounds(true)
+        this.player.setDepth(10)
+    }
+
+    /********************************************************* */
+    static prepareKeys(currentScene) {
+        this.cursors = currentScene.input.keyboard.createCursorKeys()
+        currentScene.input.keyboard.enabled = true
+            //spacebar = currentScene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
+        this.keyT = currentScene.input.keyboard.addKey('t')
+        this.keyZ = currentScene.input.keyboard.addKey('z')
+        this.keyQ = currentScene.input.keyboard.addKey('q')
+        this.keyD = currentScene.input.keyboard.addKey('d')
+        this.keyS = currentScene.input.keyboard.addKey('s')
+    }
+
+    /********************************************************* */
     static commonCreate(currentScene) {
         this.currentScene = currentScene
+        this.sceneName = currentScene.name
+
         currentScene.anims.create({
             key: 'monstreMove',
             frames: currentScene.anims.generateFrameNumbers('monstre', {
@@ -235,16 +293,8 @@ class GameUtility {
             .sprite(currentScene.playerStartX * 32 * 4, currentScene.playerStartY * 32 * 4, 'perso')
             .setScale(4)
             .refreshBody()
-        this.player.setBounce(0)
-        this.player.setCollideWorldBounds(true)
-        this.player.setDepth(10)
-        this.player.pv = 1;
-        this.player.last_pv_lost_date = Date.now();
-        this.player.redKey = false;
-        this.player.weaponIndex = 0;
-        this.player.weaponList = Object.assign({}, this.weaponsDef);
-        this.updatePlayerWeapon(this.player)
-        this.player.playerFoot = currentScene.physics.add.sprite(100, 450, 'foot').setScale(4).refreshBody();
+        this.refreshPlayer(currentScene)
+        this.player.playerFoot = currentScene.physics.add.sprite(100, 450, 'foot').setScale(4).refreshBody()
         this.player.playerFoot.setDepth(9)
         currentScene.physics.add.collider(this.player.playerFoot, currentScene.vaisseau)
 
@@ -255,38 +305,31 @@ class GameUtility {
 
         //affiche un texte à l’écran, pour le score
         // Text ammo
-        this.scoreText = currentScene.add.text(16, 16, player.weaponName + 'Ammo: ' + player.weapon.currentAmmo, {
+        currentScene.scoreText = currentScene.add.text(16, 16, this.weaponName + 'Ammo: ' + this.weapon.currentAmmo, {
             fontSize: '32px',
             fill: '#000',
-        });
-        this.pvText = currentScene.add.text(15, 64, 'PV : ' + player.pv + '/3', {
+        })
+        currentScene.pvText = currentScene.add.text(15, 64, 'PV : ' + this.pv + '/3', {
             fontSize: '32px',
             fill: '#000',
-        });
-        this.redKeyText = currentScene.add.text(15, 128, 'key missing', {
+        })
+        currentScene.redKeyText = currentScene.add.text(15, 128, 'key missing', {
             fontSize: '32px',
             fill: '#000',
-        });
-        this.redKeyText.setColor('red');
-        this.redKeyText.setScrollFactor(1);
-        this.scoreText.setColor('white');
-        this.scoreText.setScrollFactor(1);
-        this.pvText.setColor('green');
-        this.pvText.setScrollFactor(1);
+        })
+        currentScene.redKeyText.setColor('red')
+        currentScene.redKeyText.setScrollFactor(1)
+        currentScene.scoreText.setColor('white')
+        currentScene.scoreText.setScrollFactor(1)
+        currentScene.pvText.setColor('green')
+        currentScene.pvText.setScrollFactor(1)
 
-        this.cursors = currentScene.input.keyboard.createCursorKeys()
-        currentScene.input.keyboard.enabled = true
-            //spacebar = currentScene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
-        this.keyT = currentScene.input.keyboard.addKey('t')
-        this.keyZ = currentScene.input.keyboard.addKey('z')
-        this.keyQ = currentScene.input.keyboard.addKey('q')
-        this.keyD = currentScene.input.keyboard.addKey('d')
-        this.keyS = currentScene.input.keyboard.addKey('s')
+        this.prepareKeys(currentScene)
 
         var Bullet = new Phaser.Class({
             Extends: Phaser.GameObjects.Image,
             initialize: function Bullet(scene) {
-                Phaser.GameObjects.Image.call(this, scene, 0, 0, GameUtility.player.weapon.bullet);
+                Phaser.GameObjects.Image.call(this, scene, 0, 0, GameUtility.weapon.bullet)
 
                 this.incX = 0;
                 this.incY = 0;
@@ -298,11 +341,11 @@ class GameUtility {
             fire: function(x, y) {
 
                 let player = GameUtility.player;
-                this.setTexture(player.weapon.bullet);
+                this.setTexture(GameUtility.weapon.bullet)
                 this.setActive(true);
                 this.setVisible(true);
 
-                var angle = Phaser.Math.Angle.Between(x, y, player.x - player.xcamera, player.y - player.ycamera);
+                var angle = Phaser.Math.Angle.Between(x, y, player.x - player.xcamera, player.y - player.ycamera)
                 this.setRotation(angle);
 
                 this.incX = Math.cos(angle);
@@ -310,7 +353,7 @@ class GameUtility {
 
                 this.setPosition(player.x - this.incX * 70, player.y - this.incY * 70);
 
-                this.lifespan = player.weapon.lifespan; //porté tir
+                this.lifespan = GameUtility.weapon.lifespan; //porté tir
             },
             update: function(time, delta) {
                 this.lifespan -= delta;
@@ -327,10 +370,9 @@ class GameUtility {
 
         this.bullets = currentScene.physics.add.group({
             classType: Bullet,
-            maxSize: player.weapon.maxShot, //munition max afficher a l'ecran
+            maxSize: this.weapon.maxShot, //munition max afficher a l'ecran
             runChildUpdate: true,
-        });
-
+        })
         currentScene.physics.add.overlap(this.bullets, currentScene.vaisseau, this.shootWall, null, currentScene)
         currentScene.physics.add.overlap(this.bullets, currentScene.cassable, this.shootProps, null, currentScene)
 
@@ -350,7 +392,7 @@ class GameUtility {
         currentScene.physics.world.setBounds(0, 0, 3200 * 4, 3200 * 4)
         currentScene.cameras.main.setBounds(0, 0, 3200 * 4, 3200 * 4)
         currentScene.cameras.main.startFollow(this.player)
-        currentScene.cameras.main.ignore([this.scoreText, this.pvText])
+        currentScene.cameras.main.ignore([this.currentScene.scoreText, this.currentScene.pvText])
 
         this.monsterSprites = currentScene.carteDuNiveau.createFromObjects(
             'monstersObjects',
@@ -381,7 +423,7 @@ class GameUtility {
         }
         currentScene.anims.play('monstreMove', this.monsterSprites)
 
-        this.UICam = currentScene.cameras.add(0, 0, 3200, 600);
+        this.UICam = currentScene.cameras.add(0, 0, 3200, 600)
         this.UICam.ignore([
             player,
             player.playerFoot,
@@ -398,25 +440,31 @@ class GameUtility {
     }
 
     /********************************************************* */
+    static gameEnd() {
+        // TODO
+    }
+
+    /********************************************************* */
     static hitMonstre(player) {
-            let now = Date.now();
-            if (now - player.last_pv_lost_date > 2000) {
-                player.pv -= 1;
-                GameUtility.pvText.setText('PV : ' + player.pv + '/3');
-                if (player.pv <= 0) {
-                    GameUtility.currentScene.physics.pause()
-                    player.setTint(0xff0000)
-                    GameUtility.currentScene.scene.restart()
-                }
-                player.last_pv_lost_date = now
+        let now = Date.now();
+        if (now - player.last_pv_lost_date > 2000) {
+            GameUtility.pv -= 1;
+            GameUtility.currentScene.pvText.setText('PV : ' + GameUtility.pv + '/3');
+            if (GameUtility.pv <= 0) {
+                GameUtility.currentScene.physics.pause()
+                player.setTint(0xff0000)
+                GameUtility.currentScene.scene.restart()
             }
+            player.last_pv_lost_date = now
         }
-        /********************************************************* */
+    }
+
+    /********************************************************* */
     static shootWall(bullet, wall) {
         if (wall.properties.estSolide) {
-            console.log('Wall', wall);
-            bullet.destroy();
-            bullet.lifespan = 0;
+            //console.log('Wall', wall);
+            bullet.destroy()
+            bullet.lifespan = 0
         }
     }
 
@@ -456,12 +504,12 @@ class GameUtility {
     static commonUpdate(time, delta) {
         let player = this.player
         if (Phaser.Input.Keyboard.JustDown(this.keyT)) {
-            player.weaponIndex += 1;
-            if (player.weaponIndex >= this.weaponsAvailable.length) {
-                player.weaponIndex = 0;
+            this.weaponIndex += 1;
+            if (this.weaponIndex >= this.weaponsAvailable.length) {
+                this.weaponIndex = 0;
             }
             this.updatePlayerWeapon()
-            this.scoreText.setText(player.weaponName + 'Ammo: ' + player.weapon.currentAmmo)
+            this.currentScene.scoreText.setText(this.weaponName + 'Ammo: ' + this.weapon.currentAmmo)
         }
 
         if (Phaser.Input.Keyboard.DownDuration(this.keyZ, 100000)) {
@@ -494,7 +542,7 @@ class GameUtility {
         }
         //console.log(player, player.velocityX, player.velocityY)
         if (player.movingx == false && player.movingy == false) {
-            console.log('IDDLE')
+            //console.log('IDDLE')
             player.anims.play('iddle', true)
             player.playerFoot.anims.play('footiddle', true)
         }
@@ -502,11 +550,11 @@ class GameUtility {
             var bullet = this.bullets.get()
             this.UICam.ignore([bullet])
 
-            if (bullet && player.weapon.currentAmmo > 0) {
+            if (bullet && GameUtility.weapon.currentAmmo > 0) {
                 bullet.fire(this.mouseX, this.mouseY)
-                player.weapon.currentAmmo--
-                    this.scoreText.setText(player.weaponName + 'Ammo: ' + player.weapon.currentAmmo) //met à jour l’affichage du score
-                this.lastFired = time + player.weapon.cadence //duréé de la rafale
+                GameUtility.weapon.currentAmmo--
+                    this.currentScene.scoreText.setText(GameUtility.weaponName + 'Ammo: ' + GameUtility.weapon.currentAmmo) //met à jour l’affichage du score
+                this.lastFired = time + GameUtility.weapon.cadence //duréé de la rafale
             }
         }
 
@@ -563,14 +611,15 @@ var SceneA = new Phaser.Class({
             let id = i + 15;
             this.monsterIdList.push({ id: id, key: 'monstre' });
         }
-        this.idAmmo = 115;
-        this.idPv = 135;
+        this.idAmmo = 115
+        this.idPv = 135
 
         GameUtility.commonCreate(this)
     },
 
     /********************************************************* */
     update: function(time, delta) {
+        GameUtility.setCurrentScene(this, "sceneA")
         GameUtility.commonUpdate(time, delta)
     },
 });
@@ -624,10 +673,11 @@ var SceneB = new Phaser.Class({
     },
     /********************************************************* */
     update: function(time, delta) {
+        GameUtility.setCurrentScene(this, "sceneB")
         GameUtility.commonUpdate(time, delta)
     },
 
-});
+})
 
 /********************************************************* */
 var config = {
