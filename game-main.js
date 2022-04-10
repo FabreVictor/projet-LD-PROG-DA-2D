@@ -138,6 +138,7 @@ class GameUtility {
     /********************************************************* */
     static collectBonus(player, bonus) {
 
+
         if (bonus == undefined || bonus.properties == undefined) return;
         if (bonus.properties.typeBonus == 'ammo') {
             bonus.destroy();
@@ -167,7 +168,7 @@ class GameUtility {
             return;
         }
         if (bonus.properties.typeBonus == 'redkey') {
-            bonus.destroy();
+            bonus.destroy()
             GameUtility.currentScene.collectible.removeTileAt(bonus.x, bonus.y);
             GameUtility.redKey = true;
             GameUtility.currentScene.redKeyText.setText('red KEY');
@@ -188,11 +189,15 @@ class GameUtility {
                 }
             }
         }
+        if (bonus.properties.typeBonus == 'end') {
+            GameUtility.gameEnd('Congratulions !!!! You win!!!', '#0f0')
+            return
+        }
     }
 
     /********************************************************* */
     static destroyProps(player, prop) {
-        if (prop.properties.wallType == 'laser' && this.redKey == true) {
+        if (prop.properties.wallType == 'laser' && GameUtility.redKey == true) {
             console.log('LASER OPEN')
             prop.destroy()
             GameUtility.currentScene.cassable.removeTileAt(prop.x, prop.y)
@@ -400,7 +405,7 @@ class GameUtility {
         )
         currentScene.physics.world.enable(this.monsterSprites)
         for (let monster of this.monsterSprites) {
-            currentScene.physics.world.enable(monster);
+            currentScene.physics.world.enable(monster)
             Object.assign(
                 monster,
                 Phaser.Physics.Arcade.Components.Enable,
@@ -440,9 +445,17 @@ class GameUtility {
     }
 
     /********************************************************* */
-    static gameEnd() {
-        // TODO
+    static gameEnd(message, color) {
+        this.endText = GameUtility.currentScene.add.text(400, 200, message, {
+            fontSize: '160px',
+            background: 0x000,
+            fill: color,
+        })
+        GameUtility.currentScene.physics.pause()
+        GameUtility.player.setTint(color)
+        setTimeout(function() { GameUtility.currentScene.scene.restart() }, 3000)
     }
+
 
     /********************************************************* */
     static hitMonstre(player) {
@@ -451,9 +464,7 @@ class GameUtility {
             GameUtility.pv -= 1;
             GameUtility.currentScene.pvText.setText('PV : ' + GameUtility.pv + '/3');
             if (GameUtility.pv <= 0) {
-                GameUtility.currentScene.physics.pause()
-                player.setTint(0xff0000)
-                GameUtility.currentScene.scene.restart()
+                GameUtility.gameEnd("Game Over !!!!!!!", 0xFF000000)
             }
             player.last_pv_lost_date = now
         }
@@ -638,8 +649,8 @@ var SceneB = new Phaser.Class({
     },
 
     create: function() {
-        this.playerStartX = 9
-        this.playerStartY = 10
+        this.playerStartX = 18
+        this.playerStartY = 22
 
         this.carteDuNiveau = this.add.tilemap('carteLV2');
 
